@@ -3,7 +3,7 @@ DOMAIN=nakweb
 CATALOG_FILENAME=${DOMAIN}.po
 BINARY_FILENAME=${DOMAIN}.mo
 
-WEBAPP_DIR=../files/nak/webapp
+WEBAPP_DIR=../nak/webapp
 LOCALE_DIR=${WEBAPP_DIR}/locale
 ENGLISH_DIR=${WEBAPP_DIR}/locale/en/LC_MESSAGES
 
