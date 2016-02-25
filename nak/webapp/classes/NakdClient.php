@@ -31,7 +31,7 @@ class NakdClient {
         $message = array(
             'type' => 'command',
             'command' => $command->getCommand(),
-            'args' => $command->getArgs()
+            'args' => (string)$command
         );
         $message_string = json_encode($message);
 
