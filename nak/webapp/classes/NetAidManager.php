@@ -39,20 +39,25 @@ class NetAidManager
 
             $wifi_list[$ssid] = $enctype;
         }
-
         asort($wifi_list);
-
+		$wifi_list=array(_('Wired connection')=>'Wired')+$wifi_list; // add wired connection
         return $wifi_list;
     }
 
     static public function setup_wan($ssid, $key)
     {
-        if (empty($ssid))
-            return false;
-
-        $client = new NakdClient();
-        $output = $client->doCommand('wificonn', array($ssid, $key));
-
+		if($ssid != _('Wired connection')) {
+			if (empty($ssid))
+				return false;
+			
+			$client = new NakdClient();
+			$output = $client->doCommand('wificonn', array($ssid, $key));
+		} else {
+			# reset uplink wifi
+			$output = shell_exec('uci set wireless.@wifi-iface[0].disabled=1 && uci set wireless.@wifi-iface[0].ssid="" && uci set wireless.@wifi-iface[0].encryption="" && uci set wireless.@wifi-iface[0].key="" && uci commit wireless && wifi');
+			sleep(3);
+		}
+		
         return true;
     }
 
@@ -217,6 +222,11 @@ class NetAidManager
         return $mode;
     }
 
+    static public function factory_reset()
+    {
+        return shell_exec('/nak/scripts/reset.sh');
+    }
+    
     static public function detect_portal() {
         $client = new NakdClient();
         $output = $client->doCommand('isportal', array($mode));

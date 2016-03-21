@@ -4,6 +4,6 @@
     <?php echo _('<h3>Internet</h3>'); ?>
     <p>
         <?php echo _('Only allow connections over TOR or VPN:'); ?>
-        <input type="checkbox" <?= $check; ?> data-toggle="switch" id="nroutingswitch">
+        <span style="<?=(I18n::is_rtl()?'float: left; ':'')?>direction: ltr;"><input type="checkbox" <?=$check;?> data-toggle="switch" id="nroutingswitch"></span>
     </p>
 </div>

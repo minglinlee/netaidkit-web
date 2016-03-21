@@ -1,18 +1,23 @@
-<?php include ('admin/js/admin.pjs'); ?>
+<?php
+		include('notify/js/notify.pjs');
+		include('admin/js/admin.pjs');
 
-<?php include ('admin/menu.phtml'); ?>
+		include('admin/menu.phtml');
+		include('notify/notify.phtml');
+		include('update/tiles/notification.phtml');
 
-<div class="row">
+		$fblk = 'echo \'<div class="col-xs-12 col-md-6">\'; include(\'admin/tiles/tor.phtml\'); include(\'admin/tiles/vpn.phtml\'); echo \'</div>\';';
+?>
+
+<div class="row" style="margin-top: 30px;">
+	<?php if(I18n::is_rtl()) eval($fblk); ?>
     <div class="col-xs-12 col-md-6">
         <img src="/img/logo/logo-nak-square.png">
         <?php echo _('<h3>Welcome!</h3>'); ?>
         <?php $this->_displayMessages('setup'); ?>
-        <p><?php echo _('The NetAidKit is currently connected to the following wireless network:'); ?></p>
+        <p><?php echo _('The NetAidKit is currently connected to the following network:'); ?></p>
         <?php include('admin/tiles/wireless.phtml'); ?>
         <?php include('admin/tiles/internet.phtml'); ?>
     </div>
-    <div class="col-xs-12 col-md-6">
-        <?php include('admin/tiles/tor.phtml'); ?>
-        <?php include('admin/tiles/vpn.phtml'); ?>
-    </div>
+	<?php if(!I18n::is_rtl()) eval($fblk); ?>
 </div>
