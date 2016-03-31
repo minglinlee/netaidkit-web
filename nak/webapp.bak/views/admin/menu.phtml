@@ -1,0 +1,23 @@
+<nav class="navbar navbar-inverse navbar-embossed" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse-01">
+            <span class="sr-only"><?php /* TRANSLATORS: menu context */ echo _('Toggle navigation'); ?></span>
+        </button>
+        <a class="navbar-brand" href="/admin/index">NetAidKit</a>
+    </div>
+    <div class="collapse navbar-collapse" id="navbar-collapse-01">
+        <?php include('portal.phtml'); ?>
+        <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?php /* TRANSLATORS: menu context */ echo _('Advanced'); ?> <b class="caret"></b></a>
+                <span class="dropdown-arrow"></span>
+                <ul class="dropdown-menu">
+                    <li><a href="/settings/index"><?php /* TRANSLATORS: menu context */ echo _('Settings'); ?></a></li>
+                    <li><a href="/network/index"><?php /* TRANSLATORS: menu context */ echo _('Network'); ?></a></li>
+                    <li><a href="/logs/index"><?php /* TRANSLATORS: menu context */ echo _('Show logs'); ?></a></li>
+                    <li><a href="/user/logout"><?php /* TRANSLATORS: menu context */ echo _('Log out'); ?></a></li>
+                </ul>
+            </li>
+        </ul>
+    </div><!-- /.navbar-collapse -->
+</nav>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <?php echo _('<title>Welcome!</title>'); ?>
+        <link rel="icon" type="image/png" href="/img/favicon.png">
+        <!-- Loading Bootstrap -->
+        <link href="/dist/css/vendor/bootstrap.min.css" rel="stylesheet">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="/dist/js/vendor/jquery.min.js"></script>
+        <!-- Loading Flat UI -->
+        <link href="/dist/css/flat-ui.css" rel="stylesheet">
+		<link href="/dist/css/style.css" rel="stylesheet">
+
+        <!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
+        <!--[if lt IE 9]>
+            <script src="/dist/js/vendor/html5shiv.js"></script>
+            <script src="/dist/js/vendor/respond.min.js"></script>
+        <![endif]-->
+
+        <script type="text/javascript">
+            function hideHelp(){
+                // hide the divs
+                $('#desc_ssid').collapse('toggle')
+                $('#desc_key').collapse('toggle')
+                $('#desc_key_confirm').collapse('toggle')
+                $('#desc_adminpass').collapse('toggle')
+                $('#desc_distresspass').collapse('toggle')
+                $('#desc_adminpass_confirm').collapse('toggle')
+                $('#desc_adminpass_check').collapse('toggle')
+                $('#desc_password').collapse('toggle')
+            }
+        </script>
+    </head>
+    <body dir=<?php echo I18n::is_rtl() ? 'rtl' : 'ltr'; ?> onload="hideHelp();">
+        <div class="container">
+            <?= $this->_params['page_html']; ?>
+        </div>
+        <script src="/dist/js/flat-ui.min.js"></script>
+        <script src="/docs/assets/js/application.js"></script>
+    </body>
+</html>

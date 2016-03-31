@@ -1,0 +1,92 @@
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#ap-submit').click(function(event) {
+            $('#apModalText').html('<center><img src="/img/load.gif" /><br><br></center>');
+            $.ajax({
+                type: "POST",
+                url: "/setup/ap",
+                data: $('form#ap-form').serialize(),
+                timeout: 5000,
+                success: function(data) {
+                    window.location.href = '/setup/ap';
+                },
+                error: function(data) {
+                    $('#apModalTitle').html('<?php echo _('Disconnected'); ?>');
+                    $('#apModalText').html('<?php echo _('Please reconnect using the new settings. This page will reload automatically.'); ?>');
+                    $('#apModal .modal-footer').html('');
+
+                    var interval = setInterval(function() {
+                        $.ajax({
+                            type: "GET",
+                            url: "/setup/wan",
+                            timeout: 3000,
+                            success: function(data) {
+                                clearInterval(interval);
+                                window.location.href = '/setup/wan';
+                            }
+                        });
+                    }, 5000);
+                }
+            });
+
+            event.preventDefault();
+        });
+
+        $('#finish-setup').click(function(event) {
+            $('#network-name').html($('#ap-form #ssid').val());
+        });
+
+        $('#ssid').focus(function() {
+            $('#desc_ssid').collapse('show');
+            $('#ssid').parent().removeClass('has-error');
+        });
+
+        $('#key').focus(function() {
+            $('#desc_key').collapse('show');
+            $('#key').parent().removeClass('has-error');
+        });
+
+        $('#key_confirm').focus(function() {
+            $('#desc_key_confirm').collapse('show');
+            $('#key_confirm').parent().removeClass('has-error');
+        });
+
+        $('#adminpass').focus(function() {
+            $('#desc_adminpass').collapse('show');
+            $('#adminpass').parent().removeClass('has-error');
+        });
+
+        $('#adminpass_confirm').focus(function() {
+            $('#desc_adminpass_confirm').collapse('show');
+            $('#adminpass_confirm').parent().removeClass('has-error');
+        });
+
+        $('#distresspass').focus(function() {
+            $('#desc_distresspass').collapse('show');
+        });
+
+        $('#ssid').blur(function() {
+            $('#desc_ssid').collapse('hide');
+        });
+
+        $('#key').blur(function() {
+            $('#desc_key').collapse('hide');
+        });
+
+        $('#key_confirm').blur(function() {
+            $('#desc_key_confirm').collapse('hide');
+        });
+
+        $('#adminpass').blur(function() {
+            $('#desc_adminpass').collapse('hide');
+        });
+
+        $('#adminpass_confirm').blur(function() {
+            //$('#desc_adminpass_confirm').collapse('hide');
+        });
+
+        $('#distresspass').blur(function() {
+            $('#desc_distresspass').collapse('hide');
+        });
+    });
+</script>
