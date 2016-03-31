@@ -3,16 +3,16 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"><?php echo _('Close'); ?></span></button>
-                <h4 class="modal-title" id="myModalLabel"><?php echo _('Change Network:'); ?></h4>
+                <h4 class="modal-title" id="myModalLabel"><?php echo _('Change Wireless Network:'); ?></h4>
             </div>
             <div class="modal-body">
-                <p><?php echo _('Choose a new network to connect to with the NetAidKit (and enter the password):');?></p>
-                <h3><?php echo _('Select a network:'); ?></h3>
+                <p><?php echo _('Choose a new wireless network to connect to with the NetAidKit and enter the password if any:');?></p>
+                <?php echo _('<h3>Select a wireless network:</h3>'); ?>
+		<div style="float: right">
+	                <button id="wifi-refresh" type="button" class="btn btn-primary btn-default"><?php echo _('Refresh'); ?></button>
+		</div>
                 <form id="wan-form" action="/admin/wan" method="POST">
-                    <div style="position: relative;">
-						<div id="wifi-list"></div>
-						<button id="wifi-refresh" type="button" style="position: absolute; bottom: 6px; right: 24px; z-index: 99999;" class="btn btn-primary btn-default"><?php echo _('Refresh'); ?></button>
-					</div>
+                    <div id="wifi-list"></div>
                     <div class="login-form">
                         <div class="form-group">
                             <input name="key" type="password" class="form-control login-field" value="" placeholder="<?php echo _('Wireless Password'); ?>" id="login-pass" />
