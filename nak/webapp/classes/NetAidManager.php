@@ -54,9 +54,7 @@ class NetAidManager
 			$output = $client->doCommand('wificonn', array($ssid, $key));
 		} else {
 			# reset uplink wifi
-			// DEPRECATED: $output = shell_exec('uci set wireless.@wifi-iface[0].disabled=1; uci set wireless.@wifi-iface[0].ssid=""; uci set wireless.@wifi-iface[0].encryption=""; uci set wireless.@wifi-iface[0].key=""; uci commit wireless; wifi');
-			$client = new NakdClient();
-			$output = $client->doCommand('wifistop');
+			$output = shell_exec('uci set wireless.@wifi-iface[0].disabled=1 && uci set wireless.@wifi-iface[0].ssid="" && uci set wireless.@wifi-iface[0].encryption="" && uci set wireless.@wifi-iface[0].key="" && uci commit wireless && wifi');
 			sleep(3);
 		}
 		
@@ -100,7 +98,7 @@ class NetAidManager
         $client = new NakdClient();
         $output = $client->doCommand('getstage');
 
-        return $output;
+        return trim($output);
     }
 
     static public function get_inetstat()
