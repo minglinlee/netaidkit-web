@@ -54,7 +54,7 @@ class NetAidManager
 			$output = $client->doCommand('wificonn', array($ssid, $key));
 		} else {
 			# reset uplink wifi
-			$output = shell_exec('uci set wireless.@wifi-iface[0].disabled=1 && uci set wireless.@wifi-iface[0].ssid="" && uci set wireless.@wifi-iface[0].encryption="" && uci set wireless.@wifi-iface[0].key="" && uci commit wireless && wifi');
+			$output = $client->doCommand('wifistop');
 			sleep(3);
 		}
 		
@@ -161,7 +161,7 @@ class NetAidManager
     static public function wan_ssid()
     {
         $client = new NakdClient();
-        $output = $client->doCommand('wlaninfo', array("wlan0"));
+        $output = $client->doCommand('wlaninfo', array('wlan0'));
 
         preg_match_all("/Mode: (Master|Client) /", $output, $mode);
         preg_match_all("/ESSID: \"(.*)\"/", $output, $ssids);
