@@ -1,7 +1,6 @@
 <?php
 define ('MAX_MSG_LEN', 262144);
 
-/* TODO ADD EXCEPTIONS */
 class NakdClient {
     protected $_socketFile = 'unix:///run/nakd/nakd.sock';
     protected $_conn;
@@ -20,7 +19,11 @@ class NakdClient {
     }
 
     protected function _connect($socketFile) {
-        return @stream_socket_client($socketFile);
+		try {
+			return @stream_socket_client($socketFile);
+		} catch(Exception $Error) {
+			return FALSE;
+		}
     }
 
     protected function _disconnect() {
@@ -40,11 +43,12 @@ class NakdClient {
     }
 
     public function doCommand($cmdString, $args = array()) {
-        $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'", "params": '.json_encode($args).', "id": 2 }';
+		$params = implode('","',$args);
+		if($params) { $params = '["'.$params.'"]'; } else { $params = '[]'; }
+        $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'", "params": '.$params.', "id": 2 }';
         $response = $this->_sendCommand($command);
 		$json = json_decode($response, true);
 
         return $json["result"];
     }
-
 }
