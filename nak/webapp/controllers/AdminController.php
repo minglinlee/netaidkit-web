@@ -5,7 +5,7 @@ class AdminController extends Page
     protected $_torLogfile = '/var/log/tor/notices.log';
     protected $_vpnLogfile = '/var/log/openvpn.log';
 
-    protected $_allowed_actions = array('index', 'update', 'toggle_tor', 'tor_status',
+    protected $_allowed_actions = array('index', 'update', 'get_wan_status', 'toggle_tor', 'tor_status',
                                         'get_wifi', 'wan', 'toggle_vpn',
                                         'upload_vpn', 'delete_vpn',
                                         'toggle_routing', 'vpn_status');
@@ -24,9 +24,7 @@ class AdminController extends Page
         if ($cur_stage == STAGE_OFFLINE)
             $this->_redirect('/setup/wan');
 
-        $wan_ssid = NetAidManager::wan_ssid();
-        if ($wan_ssid == 'NETAIDKIT')
-            $wan_ssid = _('Wired connection');
+		$wan_ssid = $this->get_wan_status();
 
         $cur_stage = NetAidManager::get_stage();
 
@@ -51,7 +49,22 @@ class AdminController extends Page
 		$_SESSION['update_mode'] = 1;
 		$this->_redirect('/admin/index');
 	}
-	
+
+	public function get_wan_status()
+	{
+		$request = $this->getRequest();
+		$wan_ssid = NetAidManager::wan_ssid();
+		if ($wan_ssid == 'NETAIDKIT')
+			$wan_ssid = _('Wired connection');
+		$params = $wan_ssid;
+		if ($request->isAjax()) {
+			$view = new View('ajax', $params);
+			$view->display();
+		} else {
+			return $params;
+		}
+	}
+
     public function upload_vpn()
     {
         $vpn_obj = new Ovpn();

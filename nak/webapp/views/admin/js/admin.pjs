@@ -1,6 +1,10 @@
 <script type="text/javascript">
     $(document).ready(function() {
 
+        function translate($string) {
+			// AJAX post action to retrieve translated string (work in progress here)
+		}
+
         function update_wifi() {
             $.ajax({
                 type: "GET",
