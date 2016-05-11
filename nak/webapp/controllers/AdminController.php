@@ -58,8 +58,10 @@ class AdminController extends Page
 			$wan_ssid = _('Wired connection');
 		$params = $wan_ssid;
 		if ($request->isAjax()) {
-			$view = new View('ajax', $params);
-			$view->display();
+			echo $wan_ssid;
+			//$view = new View('ajax', $params);
+			//$view->display();
+			exit(0);
 		} else {
 			return $params;
 		}

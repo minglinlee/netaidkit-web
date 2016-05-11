@@ -1,8 +1,44 @@
 <script type="text/javascript">
     $(document).ready(function() {
 
-        function translate($string) {
-			// AJAX post action to retrieve translated string (work in progress here)
+		// general interval interrupt
+        setInterval(function() {
+			ajaxrefresh('/admin/get_wan_status','#wan-connection');
+        }, 5000);
+
+
+        function _tr(string, action) {
+			$.post("client/translate",
+			{
+				q: string
+			},
+			function(string, status){
+				action;
+			});				
+		}
+
+        function _echo(element, string) {
+			$.post("client/translate",
+			{
+				q: string
+			},
+			function(string, status){
+                $(element).html(string);
+			});				
+		}
+		
+        function ajaxrefresh(url, element) {
+			$.ajax({
+				type: "GET",
+				url: url,
+                success: function(data) {
+					$(element).html(data);
+                }
+            });
+		}
+
+		function spinner(element) {
+			$(element).html('<div class=\'spinner\'><div class=\'spinner-loader\'></div></div>');
 		}
 
         function update_wifi() {
@@ -100,6 +136,7 @@
 
 
         $('#wan-submit').click(function(event) {
+			spinner('#wan-connection');
             $.ajax({
                 type: "POST",
                 url: "/admin/wan",
@@ -107,8 +144,6 @@
                 success: function(data) {
                     if (data == 'SUCCESS') {
 						window.location.href = '/admin/index';
-                    } else {
-                        alert('err');
                     }
                 },
             });

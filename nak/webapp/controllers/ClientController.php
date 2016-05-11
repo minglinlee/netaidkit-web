@@ -34,7 +34,7 @@ class ClientController extends Page
     public function translate() {
         $request = $this->getRequest();
         if ($request->isPost()) {
-			$params = 'WOOT: '._($request->getvar('string'));
+			$params = $request->postvar('q');
 			$view = new View('ajax', $params);
 			$view->display();
 			exit;

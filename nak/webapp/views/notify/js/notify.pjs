@@ -16,28 +16,54 @@
 	openNotification = function(notification) {
 		if(typeof notification != 'undefined') {
 			notification_active == true;
-			var message = notification[0];
-			var type = notification[1];
-			var closetext = notification[2];
-			var buttontext = notification[3];
-			var buttonfunction = notification[4];
+			message = notification[0];
+			type = notification[1];
+			closetext = notification[2];
+			buttontext = notification[3];
+			var buttonfunction = (typeof notification[4] != 'undefined'?notification[4]:'');
 			if(typeof type == 'undefined' || type == '') { type = 'success'; }
 			if(typeof closetext == 'undefined' || closetext == '') { closetext = 'X'; }
-			// buttons
-			output = '<div class="notify-buttons">';
-			if(typeof buttontext != 'undefined') {
-				output += '<button onclick="'+buttonfunction.replace(/\"/g,"'")+';" class="btn btn-sm btn-primary">'+buttontext+'</button><div style="width: 12px; display: inline-block;"></div>';
+			// translate raw strings and push message
+			$.ajax({
+			  type: 'POST',
+			  url: '/client/translate',
+			  data: { q: closetext },
+			  success: function(data, status) { if(closetext) { closetext = data; } },
+			  async:true
+			});
+			$.ajax({
+			  type: 'POST',
+			  url: '/client/translate',
+			  data: { q: buttontext },
+			  success: function(data, status) { if(buttontext) { buttontext = data; } },
+			  async:true
+			});
+			if(message.trim().substr(0,1) != '<') {
+				$.ajax({
+				  type: 'POST',
+				  url: '/client/translate',
+				  data: { q: message },
+				  success: function(data, status) { message = data;  alert(data);},
+				  async:true
+				});
 			}
-			output += '<button onclick="closeNotification();" class="btn btn-sm btn-success">'+closetext+'</button></div>';
-			// content
-			// <p style="font-weight: bold;">Alert title</p>
-			output += '<p>'+message+'</p>';
-			$('#notify').attr('class','alert alert-'+type);
-			$('#notify > div').html(output);
-			// close after 30 seconds
-			notification_active = setTimeout( function() {
-				closeNotification();
-			}, 30000);
+			setTimeout( function() {	// for now: in lieu of using promises
+				// buttons
+				output = '<div class="notify-buttons">';
+				if(typeof buttontext != 'undefined') {
+					output += '<button onclick="'+buttonfunction.replace(/\"/g,"'")+';" class="btn btn-sm btn-primary">'+buttontext+'</button><div style="width: 12px; display: inline-block;"></div>';
+				}
+				output += '<button onclick="closeNotification();" class="btn btn-sm btn-success">'+closetext+'</button></div>';
+				// content
+				// <p style="font-weight: bold;">Alert title</p>
+				output += '<p style="margin-top: 13px;">'+message+'</p>';
+				$('#notify').attr('class','alert alert-'+type);
+				$('#notify > div').html(output);
+				// close after 30 seconds
+				notification_active = setTimeout( function() {
+					closeNotification();
+				}, 30000);
+			}, 5000);
 		}
 	}
 
