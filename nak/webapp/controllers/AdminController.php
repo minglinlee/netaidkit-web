@@ -99,7 +99,13 @@ class AdminController extends Page
 
         if ($tor_success) {
             if ($request->isAjax()) {
-                echo $tor_success ? "SUCCESS" : "FAILURE";
+				if($tor_success) {
+					$cur_stage = NetAidManager::get_stage();
+					$this->_params['cur_stage'] = $cur_stage;
+					include ('../nak/webapp/views/admin/tiles/tor.phtml');
+				} else {
+					echo 'FAILURE';
+				}
                 exit;
             } else {
                 $this->_redirect('admin/index');
@@ -169,7 +175,17 @@ class AdminController extends Page
 
         if ($vpn_success) {
             if ($request->isAjax()) {
-                echo $vpn_success ? "SUCCESS" : "FAILURE";
+				if($vpn_success) {
+					$cur_stage = NetAidManager::get_stage();
+					$this->_params['cur_stage'] = $cur_stage;
+					$vpn_obj = new Ovpn();
+					$this->_params['vpn_options'] = $vpn_obj->getOptions();
+					$this->_params['cur_vpn'] = basename($vpn_obj->getCurrent());
+					$ajax = TRUE;
+					include ('../nak/webapp/views/admin/tiles/vpn.phtml');
+				} else {
+					echo 'FAILURE';
+				}
                 exit;
             } else {
                 $this->_redirect('admin/index');

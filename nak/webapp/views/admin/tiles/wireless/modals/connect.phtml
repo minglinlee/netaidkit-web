@@ -18,7 +18,7 @@
                             <input name="key" type="password" class="form-control login-field" value="" placeholder="<?php echo _('Wireless Password'); ?>" id="login-pass" />
                             <label class="login-field-icon fui-lock" for="login-pass"></label>
                         </div>
-                        <a onclick="$('#wifiModal').modal('hide');" id="wan-submit" class="btn btn-primary btn-lg btn-block" data-toggle="modal" data-target="#wanModal"><?php echo _('Connect'); ?></a>
+                        <a onclick="$('#wifiModal').modal('hide');" id="wan-submit" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" data-target="#wanModal"><?php echo _('Connect'); ?></a>
                     </div>
                 </form>
             </div>
@@ -28,5 +28,3 @@
         </div>
     </div>
 </div>
-
-<?php include ('connecting.phtml'); ?>

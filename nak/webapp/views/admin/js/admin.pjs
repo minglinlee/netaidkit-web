@@ -52,86 +52,144 @@
             });
         }
         update_wifi();
+        
+        function updateTorStatus() {
+            $.ajax({
+                type: "GET",
+                url: "/admin/tor_status",
+                success: function(data) {
+                    $('#torprogressbar').css('width', data + '%');
+                    if (data == '100') {
+                        $("#TorStatus").html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
+                        $("#torTile").addClass("connected");
+                        clearInterval(intervaltor);
+                    }
+                }
+            });
+        }        
+
+        function updateVpnStatus() {
+            $.ajax({
+                type: "GET",
+                url: "/admin/vpn_status",
+                success: function(data) {
+                    $('#vpnprogressbar').css('width', data + '%');
+                    if (data == '100') {
+                        $("#VpnStatus").html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
+                        $("#VpnTile").addClass("connected");
+                        $("#vpn_connected").css('display', 'block');
+                        clearInterval(intervalvpn);
+                    }
+                }
+            });
+        }
+
+		function attacheventtor() {
+			$('.toggle-tor').click(function(event) {
+				$('#module-vpn .tile a').toggleClass('btn-primary').toggleClass('btn-disabled');
+				spinner('#module-tor .tile p');
+				$('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
+				$.ajax({
+					type: "GET",
+					url: "/admin/toggle_tor",
+					success: function(data) {
+						if (data != 'FAILURE') {
+							$('#module-tor').html(data);
+							updateTorStatus();
+							intervaltor = setInterval(function() {
+								updateTorStatus();
+							}, 2000);
+							setTimeout( function() {
+								attacheventtor();
+							}, 5000);
+						} else {
+							pushNotification(['Before you can connect to TOR, you must first disconnect from the VPN!','warning','Close','Disconnect from VPN','alert("WOOT!")']);
+						}
+					},
+				});
+				event.preventDefault();
+			});
+		}
+		attacheventtor();
+
+		function attacheventvpn() {
+			$('.toggle-vpn').click(function(event) {
+				if(!$('.toggle-vpn').hasClass('btn-disabled')) {
+					$('#module-vpn .tile .wrapper').html('<br><p id="placeholder"></p>');
+					var file = $("#vpnform input[type='radio']:checked").val();
+
+					var postdata = [];
+					if (typeof(file) != 'undefined')
+						postdata = {
+							'file': file
+						};
+
+					$('#module-tor .tile a').toggleClass('btn-primary').toggleClass('btn-disabled');
+					spinner('#module-vpn .tile .wrapper #placeholder');
+					$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
+					$.ajax({
+						type: "POST",
+						url: "/admin/toggle_vpn",
+						data: postdata,
+						success: function(data) {
+							if (data != 'FAILURE') {
+								$('#module-vpn').html(data);
+								updateVpnStatus();
+								intervalvpn = setInterval(function() {
+									updateVpnStatus();
+								}, 2000);
+								setTimeout( function() {
+									attacheventvpn();
+								}, 5000);
+							} else {
+								pushNotification(['Before you can connect to the VPN, you must first disconnect from TOR!','warning','Close','Disconnect from TOR','alert("WOOT!")']);
+							}
+						},
+					});
+					event.preventDefault();
+				}
+			});
+
+			$('.upload-vpn').click(function(event) {
+				var file = document.getElementById('vpnfile').files[0];
+				var size = file.size;
+
+				if (size > 20000) {
+					pushNotification(['Sorry, your file is too big. Are you sure it is a valid .ovpn file?','warning','Close']);
+					//alert('<?php echo _("Sorry, your file is too big. Are you sure it is a valid .ovpn file?"); ?>');
+					return;
+				}
+				document.getElementById('add-vpn').submit();
+			});
+
+			$('.delete-vpn').click(function(event) {
+				var file = document.getElementById('myVPN').innerHTML;
+				$.ajax({
+					type: "POST",
+					url: "/admin/delete_vpn",
+					data: {
+						'file': file
+					},
+					success: function(data) {
+						window.location.href = '/admin/index';
+					},
+				});
+
+			});
+
+			$('#vpnConnectBtn').click(function(event) {
+				var file = $("#vpnform input[type='radio']:checked").val();
+
+				if (typeof(file) == 'undefined') {
+					event.preventDefault();
+					return false;
+				}
+			});
+		}
+		attacheventvpn();
 
         $('#wifi-refresh').click(function(event) {
             update_wifi();
-        });
-
-        $('.toggle-tor').click(function(event) {
-            $.ajax({
-                type: "GET",
-                url: "/admin/toggle_tor",
-                success: function(data) {
-                    if (data == 'SUCCESS') {
-                        window.location.href = '/admin/index';
-                    } else {
-						pushNotification(['Before you can connect to TOR, you must first disconnect from the VPN!','warning','Close','Disconnect from VPN','alert("WOOT!")']);
-                        //alert("Before you can connect to TOR, you must first disconnect from the VPN!");
-                    }
-                },
-            });
-            event.preventDefault();
-        });
-
-        $('.toggle-vpn').click(function(event) {
-            var file = $("#vpnform input[type='radio']:checked").val();
-
-            var postdata = [];
-            if (typeof(file) != 'undefined')
-                postdata = {
-                    'file': file
-                };
-
-            $.ajax({
-                type: "POST",
-                url: "/admin/toggle_vpn",
-                data: postdata,
-                success: function(data) {
-                    if (data == 'SUCCESS') {
-                        window.location.href = '/admin/index';
-                    } else {
-						pushNotification(['Before you can connect to the VPN, you must first disconnect from TOR!','warning','Close','Disconnect from TOR','alert("WOOT!")']);
-                        //alert("Before you can connect to the VPN, you must first disconnect from TOR!");
-                    }
-                },
-            });
-            event.preventDefault();
-        });
-
-        $('.upload-vpn').click(function(event) {
-            var file = document.getElementById('vpnfile').files[0];
-            var size = file.size;
-
-            if (size > 20000) {
-				pushNotification(['Sorry, your file is too big. Are you sure it is a valid .ovpn file?','warning','Close']);
-                //alert('<?php echo _("Sorry, your file is too big. Are you sure it is a valid .ovpn file?"); ?>');
-                return;
-            }
-            document.getElementById('add-vpn').submit();
-        });
-
-        $('.delete-vpn').click(function(event) {
-            var file = document.getElementById('myVPN').innerHTML;
-            $.ajax({
-                type: "POST",
-                url: "/admin/delete_vpn",
-                data: {
-                    'file': file
-                },
-                success: function(data) {
-                    window.location.href = '/admin/index';
-                },
-            });
-
-        });
-
-        $('#vpnConnectBtn').click(function(event) {
-            var file = $("#vpnform input[type='radio']:checked").val();
-
-            if (typeof(file) == 'undefined') {
-                event.preventDefault();
-                return false;
-            }
         });
 
 
@@ -160,21 +218,7 @@
               && $this->_params['tor_status'] != '100'): ?>
 
         updateTorStatus();
-
-        function updateTorStatus() {
-            $.ajax({
-                type: "GET",
-                url: "/admin/tor_status",
-                success: function(data) {
-                    $('#torprogressbar').css('width', data + '%');
-                    if (data == '100') {
-                        $("#TorStatus").html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
-                        $("#torTile").addClass("connected");
-                    }
-                }
-            });
-        }
-        setInterval(function() {
+        intervaltor = setInterval(function() {
             updateTorStatus();
         }, 2000);
 
@@ -184,21 +228,6 @@
               && $this->_params['vpn_status'] != '100'): ?>
 
         updateVpnStatus();
-
-        function updateVpnStatus() {
-            $.ajax({
-                type: "GET",
-                url: "/admin/vpn_status",
-                success: function(data) {
-                    $('#vpnprogressbar').css('width', data + '%');
-                    if (data == '100') {
-                        $("#VpnStatus").html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
-                        $("#VpnTile").addClass("connected");
-                        $("#vpn_connected").css('display', 'block');
-                    }
-                }
-            });
-        }
         setInterval(function() {
             updateVpnStatus();
         }, 2000);
