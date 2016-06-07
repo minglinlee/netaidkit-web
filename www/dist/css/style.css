@@ -80,6 +80,11 @@ body {
  * UI amendments to Bootstrap / PureCSS
  */
  
+.btn-default {
+	background-color: #AAA;
+	color: #FFF;
+}
+
 .btn-disabled {
 	background-color: #CCC;
 	color: #EEE;
@@ -95,6 +100,7 @@ body {
 }
 
 #wifi-list {
+	min-height: 150px;
 	max-height: 150px;
 	margin-bottom: 24px;
 	overflow-y: auto;
