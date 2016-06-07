@@ -35,16 +35,14 @@ class NakdClient {
             $stream_meta_data = stream_get_meta_data($this->_conn);
             if ($stream_meta_data['unread_bytes'] <= 0) break;
         }
-
         return $response;
     }
 
     public function doCommand($cmdString, $args = array()) {
-        $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'", "params": '.json_encode($args).', "id": 2 }';
+        $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'", "params": '.json_encode($args).', "id": 1 }';
         $response = $this->_sendCommand($command);
 		$json = json_decode($response, true);
-
-        return $json["result"];
+        return $json['result'];
     }
 
 }

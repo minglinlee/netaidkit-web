@@ -4,7 +4,6 @@ class Ovpn {
     /* TODO: Should be from some config file */
     var $ovpn_root = '/nak/ovpn/';
 
-
     /* Returns a list of found files */
     public function getOptions() {
 
@@ -16,7 +15,7 @@ class Ovpn {
         if (is_dir($ovpn)) {
             if($dh = opendir($ovpn)) {
                 while (false !== ($file = readdir($dh))) {
-                    if (preg_match("/^(.+)\.ovpn$/", $file, $matches)) {
+                    if (preg_match('/^(.+)\.ovpn$/', $file, $matches)) {
                         $title = $matches[1];
                         $files[] = array("title" => $title, "file" => $file);
 
@@ -29,18 +28,16 @@ class Ovpn {
     }
     
     public function getCurrent() {
-        $current = $this->ovpn_root . '/current.ovpn';
-        
+        $current = $this->ovpn_root . 'current.ovpn';        
         $current = escapeshellarg($current);
-        
-        return shell_exec("readlink $current");
+        return shell_exec('readlink '.$current);
     }
 
     public function removeFile($file) {
-        if (!preg_match("/^[0-9a-zA-Z\_\-\.]*$/", $file))
+        if (!preg_match('/^[0-9a-zA-Z\_\-\.]*$/', $file))
             return false;
     
-        $path = "{$this->ovpn_root}/upload/$file";
+        $path = $this->ovpn_root.'/upload/'.$file;
         
         if (file_exists($path)) {
             unlink($path);
@@ -54,14 +51,11 @@ class Ovpn {
         if (isset($_FILES['vpnfile'])) {
             $name = $_FILES['vpnfile']['name'];
             $tmp_file = $_FILES['vpnfile']['tmp_name'];
-
-            if (preg_match("/^[a-zA-Z0-9\ -_\.]+.ovpn/", $name)) {        
-                $destination = $this->ovpn_root . "/upload/" . $name;
+            if (preg_match('/^[a-zA-Z0-9\ -_\.]+.ovpn/', $name)) {        
+                $destination = $this->ovpn_root . '/upload/' . $name;
                 move_uploaded_file($tmp_file, $destination);
-                
                 return true;
-            }
-            else {
+            } else {
                 unlink($tmp_file);
                 return false;
             }
