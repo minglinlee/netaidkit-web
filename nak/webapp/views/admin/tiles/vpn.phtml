@@ -2,7 +2,7 @@
 <?php
 if (!isset($ajax)) { $this->_displayMessages('vpn'); }
 
-if ($this->_params['cur_stage'] == STAGE_VPN)
+if ($this->_params['cur_stage'] == 'vpn')
 	include ('vpn/connected.phtml');
 else
 	include ('vpn/disconnected.phtml');

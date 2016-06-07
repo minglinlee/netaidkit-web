@@ -42,6 +42,7 @@
 		}
 
         function update_wifi() {
+			$('#wifi-list').html('<div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div>');
             $.ajax({
                 type: "GET",
                 url: "/admin/get_wifi",
@@ -189,23 +190,33 @@
 		attacheventvpn();
 
         $('#wifi-refresh').click(function(event) {
-            update_wifi();
+			if(!$('#wifi-refresh').hasClass('btn-disabled')) {
+				$('#wifi-refresh').toggleClass('btn-disabled btn-primary');
+				$('#wan-submit').toggleClass('btn-disabled btn-primary');
+				update_wifi();
+				setTimeout(function() {
+					$('#wifi-refresh').toggleClass('btn-primary btn-disabled');
+					$('#wan-submit').toggleClass('btn-primary btn-disabled');
+				},8000);
+			}
         });
 
 
         $('#wan-submit').click(function(event) {
-			spinner('#wan-connection');
-            $.ajax({
-                type: "POST",
-                url: "/admin/wan",
-                data: $('form#wan-form').serialize(),
-                success: function(data) {
-                    if (data == 'SUCCESS') {
-						window.location.href = '/admin/index';
-                    }
-                },
-            });
-            event.preventDefault();
+			if(!$('#wifi-refresh').hasClass('btn-disabled')) {        
+				spinner('#wan-connection');
+				$.ajax({
+					type: "POST",
+					url: "/admin/wan",
+					data: $('form#wan-form').serialize(),
+					success: function(data) {
+						if (data == 'SUCCESS') {
+						//	window.location.href = '/admin/index';
+						}
+					},
+				});
+				event.preventDefault();
+			}
         });
 
         $(document).on("click", ".open-deleteVPN", function() {

@@ -1,6 +1,6 @@
 <div id="module-tor">
 <?php
-    if ($this->_params['cur_stage'] == STAGE_TOR)
+    if ($this->_params['cur_stage'] =='tor')
         include ('tor/connected.phtml');
     else
         include ('tor/disconnected.phtml');
