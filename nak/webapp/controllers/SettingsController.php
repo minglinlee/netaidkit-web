@@ -12,11 +12,7 @@ class SettingsController extends Page
 
     public function index()
     {
-        $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == STAGE_DEFAULT)
-            $this->_redirect('/setup/ap');
-        if ($cur_stage == STAGE_OFFLINE)
-            $this->_redirect('/setup/wan');
+		$cur_stage = NetAidManager::init_stage();
 
         $params = array();
         $view = new View('settings', $params);

@@ -18,15 +18,9 @@ class AdminController extends Page
 
     public function index()
     {
-        $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == STAGE_DEFAULT)
-            $this->_redirect('/setup/ap');
-        if ($cur_stage == STAGE_OFFLINE)
-            $this->_redirect('/setup/wan');
+		$cur_stage = NetAidManager::init_stage();
 
 		$wan_ssid = $this->get_wan_status();
-
-        $cur_stage = NetAidManager::get_stage();
 
         $vpn_obj = new Ovpn();
         $vpn_options = $vpn_obj->getOptions();
@@ -53,14 +47,12 @@ class AdminController extends Page
 	public function get_wan_status()
 	{
 		$request = $this->getRequest();
-		$wan_ssid = NetAidManager::wan_ssid();
+		$wan_ssid = NetAidManager::wan_ssid();  // DEBUG: .' <i>('.NetAidManager::get_stage().')</i>';
 		if ($wan_ssid == 'NETAIDKIT')
 			$wan_ssid = _('Wired connection');
 		$params = $wan_ssid;
 		if ($request->isAjax()) {
 			echo $wan_ssid;
-			//$view = new View('ajax', $params);
-			//$view->display();
 			exit(0);
 		} else {
 			return $params;
@@ -167,8 +159,8 @@ class AdminController extends Page
 
         if ($ovpn_file && file_exists($ovpn_file)) {
             $ovpn_file = escapeshellarg($ovpn_file);
-            $current = escapeshellarg($ovpn_obj->ovpn_root . '/current.ovpn');
-            shell_exec("rm $current; ln -s $ovpn_file $current");
+            $current = escapeshellarg($ovpn_obj->ovpn_root.'current.ovpn');
+            shell_exec('rm '.$current.'; ln -s "'.$ovpn_file.'" '.$current);
         }
 
         $vpn_success = NetAidManager::toggle_vpn();
@@ -198,8 +190,8 @@ class AdminController extends Page
         $request = $this->getRequest();
 
         if ($request->isAjax()) {
-            $wifi_list = NetAidManager::scan_wifi();
-
+            NetAidManager::scan_wifi();
+			$wifi_list = NetAidManager::list_wifi();
             $params = array('wifi_list' => $wifi_list);
             $view = new View('wifi_ajax', $params);
             $view->display();
