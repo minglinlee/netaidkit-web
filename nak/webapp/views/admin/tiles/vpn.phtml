@@ -1,11 +1,14 @@
-<?php $this->_displayMessages('vpn'); ?>
-
+<div id="module-vpn">
 <?php
-    if ($this->_params['cur_stage'] == STAGE_VPN)
-        include ('vpn/connected.phtml');
-    else
-        include ('vpn/disconnected.phtml');
+if (!isset($ajax)) { $this->_displayMessages('vpn'); }
+
+if ($this->_params['cur_stage'] == 'vpn')
+	include ('vpn/connected.phtml');
+else
+	include ('vpn/disconnected.phtml');
 
 include ('vpn/modals/connect.phtml');
 include ('vpn/modals/add.phtml');
 include ('vpn/modals/delete.phtml');
+?>
+</div>
