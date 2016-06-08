@@ -28,30 +28,21 @@ class NakdClient {
     }
 
     protected function _sendCommand($command) {
-        $message = array(
-            'type' => 'command',
-            'command' => $command->getCommand(),
-            'args' => (string)$command
-        );
-        $message_string = json_encode($message);
-
-        fwrite($this->_conn, $message_string);
+        fwrite($this->_conn, $command);
         $response = '';
         while (!feof($this->_conn)) {
             $response .= fread($this->_conn, MAX_MSG_LEN - strlen($response));
             $stream_meta_data = stream_get_meta_data($this->_conn);
             if ($stream_meta_data['unread_bytes'] <= 0) break;
         }
-
         return $response;
     }
 
     public function doCommand($cmdString, $args = array()) {
-        $command = new CommandMessage($cmdString, $args);
+        $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'", "params": '.json_encode($args).', "id": 1 }';
         $response = $this->_sendCommand($command);
 		$json = json_decode($response, true);
-
-        return $json["result"];
+        return $json['result'];
     }
 
 }
