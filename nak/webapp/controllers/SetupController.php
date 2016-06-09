@@ -117,10 +117,10 @@ class SetupController extends Page
     {
         $cur_stage = NetAidManager::get_stage();
 
-        if (NetAidManager::get_inetstat()) {
-                NetAidManager::set_stage('online');
-                $this->_addMessage('info', _('Setup complete.'), 'setup');
-        }
+        //if (NetAidManager::get_inetstat()) {
+        //        NetAidManager::set_stage('online');
+        //        $this->_addMessage('info', _('Setup complete.'), 'setup');
+        //}
 
         if ($cur_stage != 'reset')
             $this->_redirect('/admin/index');
@@ -134,19 +134,17 @@ class SetupController extends Page
 
             if ($wan_success) {
                 NetAidManager::set_stage('offline');
-                NetAidManager::set_stage('online');
                 $this->_addMessage('info', _('Setup complete.'), 'setup');
             } else {
                 NetAidManager::set_stage('offline');
                 $this->_addMessage('info', _('Setup complete. However, a connection could not be established.'), 'setup');
 			}
-
-            if ($request->isAjax()) {
-                //echo $wan_success ? "SUCCESS" : "FAILURE";
-                echo 'SUCCESS';
-                exit;
-            }
         }
+		if ($request->isAjax()) {
+			// DEPRECATED: echo $wan_success ? "SUCCESS" : "FAILURE";
+			echo 'SUCCESS';
+			exit;
+		}
 
         $wifi_list = NetAidManager::scan_wifi();
         $wifi_list = NetAidManager::list_wifi();
