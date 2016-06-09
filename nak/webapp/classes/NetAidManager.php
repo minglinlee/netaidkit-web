@@ -8,7 +8,7 @@ class NetAidManager
             return false;
 
         $client = new NakdClient();
-        $output = $client->doCommand('configure_ap', array('ssid' => $ssid, 'key' => $key));
+        $output = $client->doCommand('configure_ap', array('ssid' => $ssid, 'key' => $key, 'hidden' => FALSE, 'disabled' => FALSE, 'encryption' => 'psk2'));
         return true;
     }
 
@@ -56,19 +56,11 @@ class NetAidManager
 			$client = new NakdClient();
 			$output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE));
 		} else {	# reset uplink wifi
-			$output = shell_exec('uci set wireless.@wifi-iface[0].disabled=1 && uci set wireless.@wifi-iface[0].ssid="" && uci set wireless.@wifi-iface[0].encryption="" && uci set wireless.@wifi-iface[0].key="" && uci commit wireless && wifi');
-			sleep(3);
+			$output = $client->doCommand('wlan_disconnect');
 		}
 		
         return true;
     }
-
-	// DEPRECATED
-    //static public function go_online()
-    //{
-    //    self::set_stage('online');
-    //    return true;
-    //}
 
     static public function set_adminpass($adminpass)
     {
@@ -91,9 +83,8 @@ class NetAidManager
     static public function get_stage()
     {
         $client = new NakdClient();		
-        $output = $client->doCommand('stage_info');
-		if(!isset($output['name']) && file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'offline' );
-		if(!isset($output['name']) && !file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'reset' );
+        $output = $client->doCommand('stage_current');
+		if(!isset($output['name']) || !file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'reset' );
         return $output['name'];
     }
 
@@ -107,8 +98,7 @@ class NetAidManager
 	static public function init_stage()
 	{
         $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == 'reset')
-			header('Location: /setup/ap');
+        if ($cur_stage == 'reset') header('Location: /setup/ap');
 		return $cur_stage;
 	}
 	
@@ -198,8 +188,8 @@ class NetAidManager
         if ($mode != 'on')
             $mode = 'off';
 
-        $client = new NakdClient();
-        //$output = $client->doCommand('broadcst', array($mode));
+        // 			 $client = new NakdClient();
+        // DISABLED: $output = $client->doCommand('broadcst', array($mode));
         $output = FALSE;	//stub
 
         return true;
@@ -207,14 +197,21 @@ class NetAidManager
 
     static public function routing_status()
     {
-        $setting = shell_exec('uci show firewall.@forwarding[0].enabled');
-        $mode = substr($setting, -3, 1);
+		// DEPRECATED:
+        // $setting = shell_exec('uci show firewall.@forwarding[0].enabled');
+        // $mode = substr($setting, -3, 1);
+		$cur_stage = self::get_stage();
+		if($cur_stage == 'offline' || $cur_stage == 'reset') {
+			$mode = FALSE;
+		} else {
+			$mode = TRUE;
+		}
         return $mode;
     }
 
     static public function broadcast_hidden_status()
     {
-        $setting = shell_exec('uci show wireless.@wifi-iface[1].hidden');
+        // $setting = shell_exec('uci show wireless.@wifi-iface[1].hidden');
         $mode = substr($setting, -3, 1);
         return $mode;
     }
@@ -229,7 +226,7 @@ class NetAidManager
     static public function detect_portal() {
         $client = new NakdClient();
         $output = $client->doCommand('connectivity');
-        return ($output['local']==true && $output['internet']==false ? true : false);
+        return ($output['local']==TRUE && $output['internet']==FALSE ? TRUE : FALSE);
     }
 
     static public function release_info() {
