@@ -9,7 +9,9 @@
                 data: $('form#ap-form').serialize(),
                 timeout: 12000,
                 success: function(data) {
-                    window.location.href = '/setup/ap';
+					setTimeout(function() {
+						window.location.href = '/setup/ap';
+					}, 8000);
                 },
                 error: function(data) {
                     $('#apModalTitle').html('<?php echo _('Disconnected'); ?>');
