@@ -54,7 +54,7 @@ class NetAidManager
 			$wifi_list = NetAidManager::list_wifi();
 			$enctype = $wifi_list[$ssid];
 			$client = new NakdClient();
-			$output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE, 'auto' => TRUE));
+			$output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE));
 		} else {	# reset uplink wifi
 			$output = $client->doCommand('wlan_disconnect'); // <- here you'll have to disable global autoconnect, too, and let user re-enable it
 		}
@@ -171,6 +171,8 @@ class NetAidManager
 
     static public function toggle_routing($mode)
     {
+        if ($mode != 'on')
+            $mode = 'off';
 		$cur_stage = self::get_stage();
 		if($cur_stage != 'vpn' && $cur_stage != 'tor') {
 			if($mode == 'on') {
@@ -196,6 +198,9 @@ class NetAidManager
 
     static public function routing_status()
     {
+		// DEPRECATED:
+        // $setting = shell_exec('uci show firewall.@forwarding[0].enabled');
+        // $mode = substr($setting, -3, 1);
 		$cur_stage = self::get_stage();
 		if($cur_stage == 'offline' || $cur_stage == 'reset') {
 			$mode = FALSE;

@@ -43,7 +43,7 @@
 				  type: 'POST',
 				  url: '/client/translate',
 				  data: { q: message },
-				  success: function(data, status) { message = data; },
+				  success: function(data, status) { message = data;  alert(data);},
 				  async:true
 				});
 			}

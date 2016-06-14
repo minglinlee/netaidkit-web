@@ -39,7 +39,7 @@ class NakdClient {
     }
 
     public function doCommand($cmdString, $args = array()) {
-        $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'", "params": '.json_encode($args).', "id": '.rand(0,1000).' }';
+        $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'", "params": '.json_encode($args).', "id": 1 }';
         $response = $this->_sendCommand($command);
 		$json = json_decode($response, true);
         return $json['result'];

@@ -2,26 +2,10 @@
     $(document).ready(function() {
 
 		// general interval interrupt
-		pauseMainInterval = 0;
-		setInterval(function() {
-				if(pauseMainInterval == 0) {
-					// wan status
-					ajaxrefresh('/admin/get_wan_status','#wan-connection');
-					// routing toggle switch state
-					$.ajax({
-						type: "GET",
-						url: "/admin/routing_status",
-						success: function(state) {
-							//$('#nroutingswitch').bootstrapSwitch('state', (1-state) );
-							if(state) {
-								$('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off');
-							} else {
-								$('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on');
-							}
-						}
-					});
-				}
-		}, 5000);
+        setInterval(function() {
+			ajaxrefresh('/admin/get_wan_status','#wan-connection');
+        }, 5000);
+
 
         function _tr(string, action) {
 			$.post("client/translate",
@@ -265,7 +249,6 @@
         <?php endif; ?>
 
         $('#nroutingswitch').on('switchChange.bootstrapSwitch', function(event, state) {
-			pauseMainInterval = 1; setTimeout(function(){ pauseMainInterval = 0; },20000);
             if (state == 1) {
                 console.log('turn it on');
                 $sdata = 'off';
@@ -273,17 +256,18 @@
                 console.log('turn it off');
                 $sdata = 'on';
             };
+
             $.ajax({
                 type: "POST",
                 url: "/admin/toggle_routing",
                 data: {
                     mode: $sdata
                 },
-				success: function(data) {
-					if (data == 'SUCCESS') {
-						$('#nroutingswitch').bootstrapSwitch('state', state );
-					}
-				}
+                success: function(data) {
+                    if (data == 'SUCCESS') {
+                        $('#nroutingswitch').bootstrapSwitch('state', state);
+                    }
+                }
             });
         });
     });
