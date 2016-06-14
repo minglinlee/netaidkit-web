@@ -8,7 +8,7 @@ class AdminController extends Page
     protected $_allowed_actions = array('index', 'update', 'get_wan_status', 'toggle_tor', 'tor_status',
                                         'get_wifi', 'wan', 'toggle_vpn',
                                         'upload_vpn', 'delete_vpn',
-                                        'toggle_routing', 'vpn_status');
+                                        'toggle_routing', 'routing_status', 'vpn_status');
 
     public function init()
     {
@@ -117,10 +117,15 @@ class AdminController extends Page
 		}
     }
 
+    public function routing_status()
+    {
+        $status = NetAidManager::routing_status();
+        die($status);
+    }
+
     public function tor_status()
     {
         $status = $this->_get_tor_status();
-
         die($status);
     }
 
@@ -216,12 +221,52 @@ class AdminController extends Page
     public function vpn_status()
     {
         $status = $this->_get_vpn_status();
-
         die($status);
     }
 
     protected function _get_vpn_status()
     {
+		$client = new NakdClient();
+        $output = $client->doCommand('openvpn','state');
+
+		if(isset($output['error'])) {
+			$result = 'not running';
+		} else {
+			$result = 'not running';
+			if(isset($output['state'])) {
+				switch($output['state']) {
+						case 'CONNECTING':
+							@$t_start = $output['timestamp'];
+							$t_sec = time() - $t_start;
+							$estimated_sec = 30;
+							if ($t_sec > $estimated_sec)
+								$progress = 80;
+							else {
+								$progress = (80 / $estimated_sec) * $t_sec;
+							}
+							$result = intval($progress);
+						break;
+						case 'WAIT': $result = 90; break;
+						case 'CONNECTED': $result = 100; break;
+						default: $result = 0;
+						/*
+							WAIT -- (Client only) Waiting for initial response
+							from server.
+							AUTH -- (Client only) Authenticating with server.
+							GET_CONFIG -- (Client only) Downloading configuration options
+							from server.
+							ASSIGN_IP -- Assigning IP address to virtual network
+							interface.
+							ADD_ROUTES -- Adding routes to system.
+							CONNECTED -- Initialization Sequence Completed.
+							RECONNECTING -- A restart has occurred.
+							EXITING -- A graceful exit is in progress.
+						*/
+				}
+			}
+		}
+		
+		/* DEPRECATED
         if (file_exists($this->_vpnLogfile)) {
             $log = file_get_contents($this->_vpnLogfile);
 
@@ -247,8 +292,8 @@ class AdminController extends Page
             }
 
             return strval(intval($progress));
-        }
+        }*/
 
-        return 'not running';
+        return $result;
     }
 }
