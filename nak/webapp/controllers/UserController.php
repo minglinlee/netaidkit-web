@@ -6,11 +6,7 @@ class UserController extends Page
 
     public function init()
     {
-        $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == STAGE_DEFAULT)
-            $this->_redirect('/setup/ap');
-        if ($cur_stage == STAGE_OFFLINE)
-            $this->_redirect('/setup/wan');
+		$cur_stage = NetAidManager::init_stage();
     }
 
     public function index()

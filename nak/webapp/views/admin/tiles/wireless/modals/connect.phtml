@@ -6,19 +6,19 @@
                 <h4 class="modal-title" id="myModalLabel"><?php echo _('Change Network:'); ?></h4>
             </div>
             <div class="modal-body">
-                <p><?php echo _('Choose a new wireless network to connect to with the NetAidKit and enter the password if any:');?></p>
-                <?php echo _('<h3>Select a wireless network:</h3>'); ?>
-		<div style="float: right">
-	                <button id="wifi-refresh" type="button" class="btn btn-primary btn-default"><?php echo _('Refresh'); ?></button>
-		</div>
+                <p><?php echo _('Choose a new network to connect to with the NetAidKit (and enter the password):');?></p>
+                <h3><?php echo _('Select a network:'); ?></h3>
                 <form id="wan-form" action="/admin/wan" method="POST">
-                    <div id="wifi-list"></div>
+                    <div style="position: relative;">
+						<div id="wifi-list"><div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div></div>
+						<button id="wifi-refresh" type="button" style="position: absolute; bottom: 6px; right: 24px; z-index: 99999;" class="btn btn-primary"><?php echo _('Refresh'); ?></button>
+					</div>
                     <div class="login-form">
                         <div class="form-group">
-                            <input name="key" type="password" class="form-control login-field" value="" placeholder="<?php echo _('Wifi Password'); ?>" id="login-pass" />
+                            <input name="key" type="password" class="form-control login-field" value="" placeholder="<?php echo _('Wireless Password'); ?>" id="login-pass" />
                             <label class="login-field-icon fui-lock" for="login-pass"></label>
                         </div>
-                        <a onclick="$('#wifiModal').modal('hide');" id="wan-submit" class="btn btn-primary btn-lg btn-block" data-toggle="modal" data-target="#wanModal"><?php echo _('Connect'); ?></a>
+                        <a onclick="$('#wifiModal').modal('hide');" id="wan-submit" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" data-target="#wanModal"><?php echo _('Connect'); ?></a>
                     </div>
                 </form>
             </div>
@@ -28,5 +28,3 @@
         </div>
     </div>
 </div>
-
-<?php include ('connecting.phtml'); ?>

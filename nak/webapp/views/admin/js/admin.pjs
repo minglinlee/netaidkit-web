@@ -1,7 +1,64 @@
 <script type="text/javascript">
     $(document).ready(function() {
 
+		// general interval interrupt
+		pauseMainInterval = 0;
+		setInterval(function() {
+				if(pauseMainInterval == 0) {
+					// wan status
+					ajaxrefresh('/admin/get_wan_status','#wan-connection');
+					// routing toggle switch state
+					$.ajax({
+						type: "GET",
+						url: "/admin/routing_status",
+						success: function(state) {
+							//$('#nroutingswitch').bootstrapSwitch('state', (1-state) );
+							if(state) {
+								$('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off');
+							} else {
+								$('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on');
+							}
+						}
+					});
+				}
+		}, 5000);
+
+        function _tr(string, action) {
+			$.post("client/translate",
+			{
+				q: string
+			},
+			function(string, status){
+				action;
+			});				
+		}
+
+        function _echo(element, string) {
+			$.post("client/translate",
+			{
+				q: string
+			},
+			function(string, status){
+                $(element).html(string);
+			});				
+		}
+		
+        function ajaxrefresh(url, element) {
+			$.ajax({
+				type: "GET",
+				url: url,
+                success: function(data) {
+					$(element).html(data);
+                }
+            });
+		}
+
+		function spinner(element) {
+			$(element).html('<div class=\'spinner\'><div class=\'spinner-loader\'></div></div>');
+		}
+
         function update_wifi() {
+			$('#wifi-list').html('<div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div>');
             $.ajax({
                 type: "GET",
                 url: "/admin/get_wifi",
@@ -12,103 +69,173 @@
             });
         }
         update_wifi();
-
-        $('#wifi-refresh').click(function(event) {
-            update_wifi();
-        });
-
-        $('.toggle-tor').click(function(event) {
+        
+        function updateTorStatus() {
             $.ajax({
                 type: "GET",
-                url: "/admin/toggle_tor",
+                url: "/admin/tor_status",
                 success: function(data) {
-                    if (data == 'SUCCESS') {
-                        window.location.href = '/admin/index';
-                    } else {
-						pushNotification(['Before you can connect to TOR, you must first disconnect from the VPN!','warning','Close','Disconnect from VPN','alert("WOOT!")']);
-                        //alert("Before you can connect to TOR, you must first disconnect from the VPN!");
+                    $('#torprogressbar').css('width', data + '%');
+                    if (data == '100') {
+                        $("#TorStatus").html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
+                        $("#torTile").addClass("connected");
+                        clearInterval(intervaltor);
                     }
-                },
+                }
             });
-            event.preventDefault();
-        });
+        }        
 
-        $('.toggle-vpn').click(function(event) {
-            var file = $("#vpnform input[type='radio']:checked").val();
-
-            var postdata = [];
-            if (typeof(file) != 'undefined')
-                postdata = {
-                    'file': file
-                };
-
+        function updateVpnStatus() {
             $.ajax({
-                type: "POST",
-                url: "/admin/toggle_vpn",
-                data: postdata,
+                type: "GET",
+                url: "/admin/vpn_status",
                 success: function(data) {
-                    if (data == 'SUCCESS') {
-                        window.location.href = '/admin/index';
-                    } else {
-						pushNotification(['Before you can connect to the VPN, you must first disconnect from TOR!','warning','Close','Disconnect from TOR','alert("WOOT!")']);
-                        //alert("Before you can connect to the VPN, you must first disconnect from TOR!");
+                    $('#vpnprogressbar').css('width', data + '%');
+                    if (data == '100') {
+                        $("#VpnStatus").html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
+                        $("#VpnTile").addClass("connected");
+                        $("#vpn_connected").css('display', 'block');
+                        clearInterval(intervalvpn);
                     }
-                },
+                }
             });
-            event.preventDefault();
-        });
+        }
 
-        $('.upload-vpn').click(function(event) {
-            var file = document.getElementById('vpnfile').files[0];
-            var size = file.size;
+		function attacheventtor() {
+			$('.toggle-tor').click(function(event) {
+				$('#module-vpn .tile a').toggleClass('btn-primary').toggleClass('btn-disabled');
+				spinner('#module-tor .tile p');
+				$('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
+				$.ajax({
+					type: "GET",
+					url: "/admin/toggle_tor",
+					success: function(data) {
+						if (data != 'FAILURE') {
+							$('#module-tor').html(data);
+							updateTorStatus();
+							intervaltor = setInterval(function() {
+								updateTorStatus();
+							}, 2000);
+							setTimeout( function() {
+								attacheventtor();
+								// set buttons back to default state
+								$('#module-vpn .tile a').toggleClass('btn-primary').toggleClass('btn-disabled');
+								$('#module-tor .tile a').addClass('btn-primary').removeClass('btn-disabled');
+							}, 5000);
+						} else {
+							pushNotification(['Something went wrong toggling the TOR connection. Are you connected to the Internet?','warning','Close','Disconnect from VPN','alert("WOOT!")']);
+						}
+					},
+				});
+				event.preventDefault();
+			});
+		}
+		attacheventtor();
 
-            if (size > 20000) {
-				pushNotification(['Sorry, your file is too big. Are you sure it is a valid .ovpn file?','warning','Close']);
-                //alert('<?php echo _("Sorry, your file is too big. Are you sure it is a valid .ovpn file?"); ?>');
-                return;
-            }
-            document.getElementById('add-vpn').submit();
-        });
+		function attacheventvpn() {
+			$('.toggle-vpn').click(function(event) {
+				if(!$('.toggle-vpn').hasClass('btn-disabled')) {
+					$('#module-vpn .tile .wrapper').html('<br><p id="placeholder"></p>');
+					var file = $("#vpnform input[type='radio']:checked").val();
 
-        $('.delete-vpn').click(function(event) {
-            var file = document.getElementById('myVPN').innerHTML;
-            $.ajax({
-                type: "POST",
-                url: "/admin/delete_vpn",
-                data: {
-                    'file': file
-                },
-                success: function(data) {
-                    window.location.href = '/admin/index';
-                },
-            });
+					var postdata = [];
+					if (typeof(file) != 'undefined')
+						postdata = {
+							'file': file
+						};
 
-        });
+					$('#module-tor .tile a').toggleClass('btn-primary').toggleClass('btn-disabled');
+					spinner('#module-vpn .tile .wrapper #placeholder');
+					$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
+					$.ajax({
+						type: "POST",
+						url: "/admin/toggle_vpn",
+						data: postdata,
+						success: function(data) {
+							if (data != 'FAILURE') {
+								$('#module-vpn').html(data);
+								updateVpnStatus();
+								intervalvpn = setInterval(function() {
+									updateVpnStatus();
+								}, 2000);
+								setTimeout( function() {
+									attacheventvpn();
+								}, 5000);
+							} else {
+								pushNotification(['Something went wrong toggling the VPN connection. Are you connected to the Internet?','warning','Close','Disconnect from TOR']);
+							}
+						},
+					});
+					event.preventDefault();
+				}
+			});
 
-        $('#vpnConnectBtn').click(function(event) {
-            var file = $("#vpnform input[type='radio']:checked").val();
+			$('.upload-vpn').click(function(event) {
+				var file = document.getElementById('vpnfile').files[0];
+				var size = file.size;
 
-            if (typeof(file) == 'undefined') {
-                event.preventDefault();
-                return false;
-            }
+				if (size > 20000) {
+					pushNotification(['Sorry, your file is too big. Are you sure it is a valid .ovpn file?','warning','Close']);
+					//alert('<?php echo _("Sorry, your file is too big. Are you sure it is a valid .ovpn file?"); ?>');
+					return;
+				}
+				document.getElementById('add-vpn').submit();
+			});
+
+			$('.delete-vpn').click(function(event) {
+				var file = document.getElementById('myVPN').innerHTML;
+				$.ajax({
+					type: "POST",
+					url: "/admin/delete_vpn",
+					data: {
+						'file': file
+					},
+					success: function(data) {
+						window.location.href = '/admin/index';
+					},
+				});
+
+			});
+
+			$('#vpnConnectBtn').click(function(event) {
+				var file = $("#vpnform input[type='radio']:checked").val();
+
+				if (typeof(file) == 'undefined') {
+					event.preventDefault();
+					return false;
+				}
+			});
+		}
+		attacheventvpn();
+
+        $('#wifi-refresh').click(function(event) {
+			if(!$('#wifi-refresh').hasClass('btn-disabled')) {
+				$('#wifi-refresh').toggleClass('btn-disabled btn-primary');
+				$('#wan-submit').toggleClass('btn-disabled btn-primary');
+				update_wifi();
+				setTimeout(function() {
+					$('#wifi-refresh').toggleClass('btn-primary btn-disabled');
+					$('#wan-submit').toggleClass('btn-primary btn-disabled');
+				},8000);
+			}
         });
 
 
         $('#wan-submit').click(function(event) {
-            $.ajax({
-                type: "POST",
-                url: "/admin/wan",
-                data: $('form#wan-form').serialize(),
-                success: function(data) {
-                    if (data == 'SUCCESS') {
-                        window.location.href = '/admin/index';
-                    } else {
-                        alert('err');
-                    }
-                },
-            });
-            event.preventDefault();
+			if(!$('#wifi-refresh').hasClass('btn-disabled')) {        
+				spinner('#wan-connection');
+				$.ajax({
+					type: "POST",
+					url: "/admin/wan",
+					data: $('form#wan-form').serialize(),
+					success: function(data) {
+						if (data == 'SUCCESS') {
+						//	window.location.href = '/admin/index';
+						}
+					},
+				});
+				event.preventDefault();
+			}
         });
 
         $(document).on("click", ".open-deleteVPN", function() {
@@ -121,21 +248,7 @@
               && $this->_params['tor_status'] != '100'): ?>
 
         updateTorStatus();
-
-        function updateTorStatus() {
-            $.ajax({
-                type: "GET",
-                url: "/admin/tor_status",
-                success: function(data) {
-                    $('#torprogressbar').css('width', data + '%');
-                    if (data == '100') {
-                        $("#TorStatus").html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
-                        $("#torTile").addClass("connected");
-                    }
-                }
-            });
-        }
-        setInterval(function() {
+        intervaltor = setInterval(function() {
             updateTorStatus();
         }, 2000);
 
@@ -145,21 +258,6 @@
               && $this->_params['vpn_status'] != '100'): ?>
 
         updateVpnStatus();
-
-        function updateVpnStatus() {
-            $.ajax({
-                type: "GET",
-                url: "/admin/vpn_status",
-                success: function(data) {
-                    $('#vpnprogressbar').css('width', data + '%');
-                    if (data == '100') {
-                        $("#VpnStatus").html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
-                        $("#VpnTile").addClass("connected");
-                        $("#vpn_connected").css('display', 'block');
-                    }
-                }
-            });
-        }
         setInterval(function() {
             updateVpnStatus();
         }, 2000);
@@ -167,6 +265,7 @@
         <?php endif; ?>
 
         $('#nroutingswitch').on('switchChange.bootstrapSwitch', function(event, state) {
+			pauseMainInterval = 1; setTimeout(function(){ pauseMainInterval = 0; },20000);
             if (state == 1) {
                 console.log('turn it on');
                 $sdata = 'off';
@@ -174,18 +273,17 @@
                 console.log('turn it off');
                 $sdata = 'on';
             };
-
             $.ajax({
                 type: "POST",
                 url: "/admin/toggle_routing",
                 data: {
                     mode: $sdata
                 },
-                success: function(data) {
-                    if (data == 'SUCCESS') {
-                        $('#nroutingswitch').bootstrapSwitch('state', state);
-                    }
-                }
+				success: function(data) {
+					if (data == 'SUCCESS') {
+						$('#nroutingswitch').bootstrapSwitch('state', state );
+					}
+				}
             });
         });
     });

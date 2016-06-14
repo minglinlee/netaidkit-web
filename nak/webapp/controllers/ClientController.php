@@ -2,7 +2,7 @@
 
 class ClientController extends Page
 {
-    protected $_allowed_actions = array('locale', 'set_locale');
+    protected $_allowed_actions = array('locale', 'set_locale', 'translate');
 
     public function locale() {
         if (I18n::settings_get_language() !== false ||
@@ -29,4 +29,15 @@ class ClientController extends Page
             }
         }
     }
+    
+	
+    public function translate() {
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+			$params = $request->postvar('q');
+			$view = new View('ajax', $params);
+			$view->display();
+			exit;
+		}
+    }    
 }

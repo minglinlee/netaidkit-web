@@ -12,13 +12,12 @@ class SetupController extends Page
     public function ap()
     {
         $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == STAGE_OFFLINE)
-            $this->_redirect('/setup/wan');
 
-        /* All stages higher then STAGE_ONLINE are versions "ONLINE" versions,
-         * so redirect to admin/index */
-        if ($cur_stage >= STAGE_ONLINE)
+        if ($cur_stage != 'reset')
             $this->_redirect('/admin/index');
+
+		if(file_exists(ROOT_DIR . '/data/configured'))
+            $this->_redirect('/setup/wan');
 
         $request = $this->getRequest();
         if ($request->isPost()) {
@@ -32,14 +31,13 @@ class SetupController extends Page
             $valid = $this->ap_validate($ssid, $key, $adminpass, $key_confirm, $adminpass_confirm);
 
             if ($valid) {
-                $ap_success = NetAidManager::setup_ap($ssid, $key);
                 $pass_success = NetAidManager::set_adminpass($adminpass);
-                $success = ($ap_success && $pass_success);
-
-                if ($success) {
-                    NetAidManager::set_stage(STAGE_OFFLINE);
-                    $this->addMessage('info', _('Access Point successfully set up.'), 'wan');
-                }
+                $ap_success = NetAidManager::setup_ap($ssid, $key);
+				$success = ($ap_success && $pass_success);
+				if ($success) {
+					file_put_contents(ROOT_DIR . '/data/configured',time());
+					$this->_addMessage('info', _('Access Point successfully set up.'), 'wan');
+				}
             } else {
                 $this->_addFormData('ssid', $ssid, 'ap');
                 $this->_addFormData('key', $key, 'ap');
@@ -84,7 +82,7 @@ class SetupController extends Page
 
         if ($key != $key_confirm) {
             $valid = false;
-            $this->_addMessage('error', _('Wifi key does not match.'), 'ap');
+            $this->_addMessage('error', _('Wireless key does not match.'), 'ap');
             $this->_addFormError('key', 'ap');
             $this->_addFormError('key_confirm', 'ap');
         }
@@ -118,17 +116,14 @@ class SetupController extends Page
     public function wan()
     {
         $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == STAGE_DEFAULT)
-            $this->_redirect('/setup/ap');
-        if ($cur_stage == STAGE_ONLINE)
-            $this->_redirect('/admin/index');
 
-        if (NetAidManager::get_inetstat()) {
-                NetAidManager::go_online();
-                NetAidManager::set_stage(STAGE_ONLINE);
-                $this->_addMessage('info', _('Setup complete.'), 'setup');
-                $this->_redirect('/admin/index');
-        }
+        //if (NetAidManager::get_inetstat()) {
+        //        NetAidManager::set_stage('online');
+        //        $this->_addMessage('info', _('Setup complete.'), 'setup');
+        //}
+
+        if ($cur_stage != 'reset')
+            $this->_redirect('/admin/index');
 
         $request = $this->getRequest();
         if ($request->isPost()) {
@@ -138,18 +133,22 @@ class SetupController extends Page
             $wan_success  = NetAidManager::setup_wan($ssid, $key);
 
             if ($wan_success) {
-                NetAidManager::set_stage(STAGE_ONLINE);
+                NetAidManager::set_stage('offline');
                 $this->_addMessage('info', _('Setup complete.'), 'setup');
-            }
-
-            if ($request->isAjax()) {
-                echo $wan_success ? "SUCCESS" : "FAILURE";
-                exit;
-            }
+            } else {
+                NetAidManager::set_stage('offline');
+                $this->_addMessage('info', _('Setup complete. However, a connection could not be established.'), 'setup');
+			}
         }
+		if ($request->isAjax()) {
+			// DEPRECATED: echo $wan_success ? "SUCCESS" : "FAILURE";
+			echo 'SUCCESS';
+			exit;
+		}
 
         $wifi_list = NetAidManager::scan_wifi();
-
+        $wifi_list = NetAidManager::list_wifi();
+		
         $params = array('wifi_list' => $wifi_list);
         $view = new View('setup_wan', $params);
         return $view->display();

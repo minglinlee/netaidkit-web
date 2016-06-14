@@ -1,33 +1,36 @@
 <script type="text/javascript">
     $(document).ready(function() {
         $('#ap-submit').click(function(event) {
-            $('#apModalText').html('<center><img src="/img/load.gif" /><br><br></center>');
-            $.ajax({
-                type: "POST",
-                url: "/setup/ap",
-                data: $('form#ap-form').serialize(),
-                timeout: 5000,
-                success: function(data) {
-                    window.location.href = '/setup/ap';
-                },
-                error: function(data) {
-                    $('#apModalTitle').html('<?php echo _('Disconnected'); ?>');
-                    $('#apModalText').html('<?php echo _('Please reconnect using the new settings. This page will reload automatically.'); ?>');
-                    $('#apModal .modal-footer').html('');
+            $('#apModalText').html('<center><div class="spinner" style="margin: 20px;"><div class="spinner-loader"></div></div></center>');
+            $("#ap-submit").toggleClass("btn-primary btn-disabled");
+			setTimeout(function() {
+				$.ajax({
+					type: "POST",
+					url: "/setup/ap",
+					data: $('form#ap-form').serialize(),
+					timeout: 12000,
+					success: function(data) {
+						window.location.href = '/setup/ap';
+					},
+					error: function(data) {
+						$('#apModalTitle').html('<?php echo _('Disconnected'); ?>');
+						$('#apModalText').html('<?php echo _('Please reconnect using the new settings. This page will reload automatically.'); ?>');
+						$('#apModal .modal-footer').html('');
 
-                    var interval = setInterval(function() {
-                        $.ajax({
-                            type: "GET",
-                            url: "/setup/wan",
-                            timeout: 3000,
-                            success: function(data) {
-                                clearInterval(interval);
-                                window.location.href = '/setup/wan';
-                            }
-                        });
-                    }, 5000);
-                }
-            });
+						var interval = setInterval(function() {
+							$.ajax({
+								type: "GET",
+								url: "/setup/wan",
+								timeout: 8000,
+								success: function(data) {
+									clearInterval(interval);
+									window.location.href = '/setup/wan';
+								}
+							});
+						}, 5000);
+					}
+				});
+			}, 8000);
 
             event.preventDefault();
         });

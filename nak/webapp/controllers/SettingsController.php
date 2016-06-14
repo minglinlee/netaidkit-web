@@ -2,7 +2,7 @@
 
 class SettingsController extends Page
 {
-    protected $_allowed_actions = array('index', 'ap', 'password');
+    protected $_allowed_actions = array('index', 'ap', 'password', 'reset');
 
     public function init()
     {
@@ -12,11 +12,7 @@ class SettingsController extends Page
 
     public function index()
     {
-        $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == STAGE_DEFAULT)
-            $this->_redirect('/setup/ap');
-        if ($cur_stage == STAGE_OFFLINE)
-            $this->_redirect('/setup/wan');
+		$cur_stage = NetAidManager::init_stage();
 
         $params = array();
         $view = new View('settings', $params);
@@ -53,6 +49,12 @@ class SettingsController extends Page
             }
         }
     }
+    
+    public function reset()
+    {
+        $this->_addMessage('info', _('Resetting NetAidKit back to factory settings.'), 'reset');
+        NetAidManager::factory_reset();
+    }    
 
     protected function ap_validate($ssid, $key, $key_confirm)
     {
