@@ -1,0 +1,30 @@
+<div class="modal fade" id="wifiModal" tabindex="-1" role="dialog" aria-labelledby="myWifiLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"><?php echo _('Close'); ?></span></button>
+                <h4 class="modal-title" id="myModalLabel"><?php echo _('Configure Network:'); ?></h4>
+            </div>
+            <div class="modal-body">
+                <p><?php echo _('Configure this stored network by changing data in these fields:');?></p>
+                <form id="wan-form" action="/admin/wan" method="POST">
+                    <div style="position: relative;">
+						<div id="fieldlist"><div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div></div>
+					</div>
+                    <div class="login-form">
+                        <div class="form-group">
+                            <input name="autoconnect" type="input" class="form-control login-field" value="" placeholder="<?php echo _('Auto Connect'); ?>" id="auto-connect" />
+                            <label class="login-field-icon fui-lock" for="login-pass"></label>
+                            <input name="key" type="password" class="form-control login-field" value="" placeholder="<?php echo _('Wireless Password'); ?>" id="login-pass" />
+                            <label class="login-field-icon fui-lock" for="login-pass"></label>
+                        </div>
+                        <a onclick="$('#wifiModal').modal('hide');" id="wan-submit" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" data-target="#wanModal"><?php echo _('Submit Changes'); ?></a>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _('Cancel'); ?></button>
+            </div>
+        </div>
+    </div>
+</div>
