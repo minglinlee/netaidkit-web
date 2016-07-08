@@ -2,7 +2,7 @@
 
 class NetworkController extends Page
 {
-    protected $_allowed_actions = array('index', 'save');
+    protected $_allowed_actions = array('index','save','set_stored_wifi');
 
     public function init()
     {
@@ -40,4 +40,30 @@ class NetworkController extends Page
             }
         };
     }
+
+    public function set_stored_wifi()
+    {
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            $action = $request->postvar('action');
+            switch($action) {
+				case 'setauto':
+					$ssid = $request->postvar('ssid');
+					$properties = array('auto' => $request->postvar('auto'));
+					$output = NetAidManager::set_stored_wifi($ssid,$properties);
+				break;
+				case 'delete':
+					$ssid = $request->postvar('ssid');
+					$output = NetAidManager::del_stored_wifi($ssid);
+				break;
+			}
+
+            if ($request->isAjax()) {
+				$success = TRUE; // stopgap
+                echo ($success) ? "SUCCESS ".$action.' -> '.var_dump($output) : "FAILURE";
+                exit;
+            }
+        };
+    }
+
 }

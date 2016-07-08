@@ -5,10 +5,10 @@ class AdminController extends Page
     protected $_torLogfile = '/var/log/tor/notices.log';
     protected $_vpnLogfile = '/var/log/openvpn.log';
 
-    protected $_allowed_actions = array('index', 'update', 'get_wan_status', 'toggle_tor', 'tor_status',
-                                        'get_wifi', 'wan', 'toggle_vpn',
+    protected $_allowed_actions = array('index', 'update', 'get_wan_status', 'toggle_tor', 'display_tor', 'tor_status',
+                                        'get_wifi', 'get_stored_wifi', 'wan', 'toggle_vpn', 'display_vpn', 
                                         'upload_vpn', 'delete_vpn',
-                                        'toggle_routing', 'vpn_status');
+                                        'toggle_routing', 'routing_status', 'vpn_status');
 
     public function init()
     {
@@ -18,9 +18,7 @@ class AdminController extends Page
 
     public function index()
     {
-		$cur_stage = NetAidManager::init_stage();
-
-		$wan_ssid = $this->get_wan_status();
+		$cur_stage = NetAidManager::get_stage();
 
         $vpn_obj = new Ovpn();
         $vpn_options = $vpn_obj->getOptions();
@@ -30,7 +28,7 @@ class AdminController extends Page
         $vpn_status = $this->_get_vpn_status();
         $routing_status = NetAidManager::routing_status();
 
-        $params = array('cur_stage' => $cur_stage, 'wan_ssid' => $wan_ssid,
+        $params = array('cur_stage' => $cur_stage, 'wan_ssid' => '',
                         'vpn_options' => $vpn_options, 'cur_vpn' => $cur_vpn,
                         'tor_status' => $tor_status, 'vpn_status' => $vpn_status,
                         'routing_status' => $routing_status);
@@ -91,9 +89,7 @@ class AdminController extends Page
 
 		if ($request->isAjax()) {
 			if($tor_success) {
-				$cur_stage = NetAidManager::get_stage();
-				$this->_params['cur_stage'] = $cur_stage;
-				include ('../nak/webapp/views/admin/tiles/tor.phtml');
+				echo 'SUCCESS';
 			} else {
 				echo 'FAILURE';
 			}
@@ -117,10 +113,15 @@ class AdminController extends Page
 		}
     }
 
+    public function routing_status()
+    {
+        $status = NetAidManager::routing_status();
+        die($status);
+    }
+
     public function tor_status()
     {
         $status = $this->_get_tor_status();
-
         die($status);
     }
 
@@ -139,7 +140,7 @@ class AdminController extends Page
                     $progress = '5';
             }
 
-            return $progress;
+            return $log.' #  '.$progress;
         } else {
             return 'not running';
         }
@@ -153,7 +154,7 @@ class AdminController extends Page
         if (!empty($request->postvar('file')))
             $ovpn_file = $ovpn_obj->ovpn_root . '/upload/' . basename($request->postvar('file'));
 
-		$current = escapeshellarg($ovpn_obj->ovpn_root.'/current.ovpn');
+		$current = $ovpn_obj->ovpn_root . '/current.ovpn';
         if ($ovpn_file && file_exists($ovpn_file)) {
             $ovpn_file = escapeshellarg($ovpn_file);
             shell_exec('rm '.$current.'; ln -s '.$ovpn_file.' '.$current);
@@ -167,13 +168,7 @@ class AdminController extends Page
 		
 		if ($request->isAjax()) {
 			if($vpn_success) {
-				$cur_stage = NetAidManager::get_stage();
-				$this->_params['cur_stage'] = $cur_stage;
-				$vpn_obj = new Ovpn();
-				$this->_params['vpn_options'] = $vpn_obj->getOptions();
-				$this->_params['cur_vpn'] = basename($vpn_obj->getCurrent());
-				$ajax = TRUE;
-				include ('../nak/webapp/views/admin/tiles/vpn.phtml');
+				echo 'SUCCESS';
 			} else {
 				echo 'FAILURE';
 			}
@@ -192,6 +187,18 @@ class AdminController extends Page
 			$wifi_list = NetAidManager::list_wifi();
             $params = array('wifi_list' => $wifi_list);
             $view = new View('wifi_ajax', $params);
+            $view->display();
+            exit;
+        }
+    }
+
+    public function get_stored_wifi()
+    {
+        $request = $this->getRequest();
+        if ($request->isAjax()) {
+			$wifi_list = NetAidManager::list_stored_wifi();
+            $params = array('wifi_list' => $wifi_list);
+            $view = new View('wifi_ajax_adv', $params);
             $view->display();
             exit;
         }
@@ -216,12 +223,52 @@ class AdminController extends Page
     public function vpn_status()
     {
         $status = $this->_get_vpn_status();
-
         die($status);
     }
 
     protected function _get_vpn_status()
     {
+		$client = new NakdClient();
+        $output = $client->doCommand('openvpn','state');
+
+		if(isset($output['error'])) {
+			$result = 'not running';
+		} else {
+			$result = 'not running';
+			if(isset($output['state'])) {
+				switch($output['state']) {
+						case 'CONNECTING':
+							@$t_start = $output['timestamp'];
+							$t_sec = time() - $t_start;
+							$estimated_sec = 30;
+							if ($t_sec > $estimated_sec)
+								$progress = 80;
+							else {
+								$progress = (80 / $estimated_sec) * $t_sec;
+							}
+							$result = intval($progress);
+						break;
+						case 'WAIT': $result = 90; break;
+						case 'CONNECTED': $result = 100; break;
+						default: $result = 0;
+						/*
+							WAIT -- (Client only) Waiting for initial response
+							from server.
+							AUTH -- (Client only) Authenticating with server.
+							GET_CONFIG -- (Client only) Downloading configuration options
+							from server.
+							ASSIGN_IP -- Assigning IP address to virtual network
+							interface.
+							ADD_ROUTES -- Adding routes to system.
+							CONNECTED -- Initialization Sequence Completed.
+							RECONNECTING -- A restart has occurred.
+							EXITING -- A graceful exit is in progress.
+						*/
+				}
+			}
+		}
+		
+		/* DEPRECATED
         if (file_exists($this->_vpnLogfile)) {
             $log = file_get_contents($this->_vpnLogfile);
 
@@ -247,8 +294,39 @@ class AdminController extends Page
             }
 
             return strval(intval($progress));
-        }
+        }*/
 
-        return 'not running';
+        return $result;
     }
+    
+    public function display_tor()
+    {
+        $request = $this->getRequest();
+		if ($request->isAjax()) {
+			$cur_stage = NetAidManager::get_stage();
+			$this->_params['cur_stage'] = $cur_stage;
+			include ('../nak/webapp/views/admin/tiles/tor.phtml');
+			exit;
+		} else {
+			$this->_redirect('admin/index');
+		}
+	}
+	
+    public function display_vpn()
+    {
+        $request = $this->getRequest();
+		if ($request->isAjax()) {
+			$cur_stage = NetAidManager::get_stage();
+			$this->_params['cur_stage'] = $cur_stage;
+			$vpn_obj = new Ovpn();
+			$this->_params['vpn_options'] = $vpn_obj->getOptions();
+			$this->_params['cur_vpn'] = basename($vpn_obj->getCurrent());
+			$ajax = TRUE;
+			include ('../nak/webapp/views/admin/tiles/vpn.phtml');
+			exit;
+		} else {
+			$this->_redirect('admin/index');
+		}
+	}
+    
 }

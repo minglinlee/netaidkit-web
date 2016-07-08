@@ -1,4 +1,3 @@
-<script type="text/javascript">
     $(document).ready(function() {
         $('#submit-network').click(function(event) {
             $('html').find('*').css("cursor", "wait");
@@ -13,4 +12,41 @@
             });
         });
     });
-</script>
+
+	function update_wifi() {
+		$('#wifi-list').html('<div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div>');
+		$.ajax({
+			type: "GET",
+			url: "/admin/get_stored_wifi",
+			success: function(data) {
+				$('#wifi-list').html(data);
+				//$('#wifi-list').trigger("create");
+			}
+		});
+	}
+	update_wifi();
+
+	function autoButton(ssid) {
+		$.ajax({
+			type: "POST",
+			url: "/network/set_stored_wifi",
+			data: {'action':'setauto','ssid':ssid,'auto':($('#autoButton-'+ssid+'>span').hasClass('fui-play')?true:false)},
+			success: function(data) {
+				$('#autoButton-'+ssid+'>span').toggleClass('fui-pause');
+				$('#autoButton-'+ssid+'>span').toggleClass('fui-play');
+				//debug: alert('That worked! '+data);
+			}
+		});
+	}
+
+	function deleteButton(ssid) {
+		$('#wifiNetwork-'+ssid).fadeOut();
+		$.ajax({
+			type: "POST",
+			url: "/network/set_stored_wifi",
+			data: {'action':'delete','ssid':ssid},
+			success: function(data) {
+				//debug: alert('That worked! '+data);
+			}
+		});
+	}

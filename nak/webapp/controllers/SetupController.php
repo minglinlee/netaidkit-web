@@ -13,10 +13,10 @@ class SetupController extends Page
     {
         $cur_stage = NetAidManager::get_stage();
 
-        if ($cur_stage != 'reset')
+        if ($cur_stage != 'reset' && $cur_stage != 'wansetup')
             $this->_redirect('/admin/index');
 
-		if(file_exists(ROOT_DIR . '/data/configured'))
+		if($cur_stage == 'wansetup')
             $this->_redirect('/setup/wan');
 
         $request = $this->getRequest();
@@ -35,7 +35,6 @@ class SetupController extends Page
                 $ap_success = NetAidManager::setup_ap($ssid, $key);
 				$success = ($ap_success && $pass_success);
 				if ($success) {
-					file_put_contents(ROOT_DIR . '/data/configured',time());
 					$this->_addMessage('info', _('Access Point successfully set up.'), 'wan');
 				}
             } else {
@@ -115,14 +114,15 @@ class SetupController extends Page
 
     public function wan()
     {
-        $cur_stage = NetAidManager::get_stage();
 
         //if (NetAidManager::get_inetstat()) {
         //        NetAidManager::set_stage('online');
         //        $this->_addMessage('info', _('Setup complete.'), 'setup');
         //}
 
-        if ($cur_stage != 'reset')
+        $cur_stage = NetAidManager::get_stage();
+
+        if ($cur_stage != 'reset' && $cur_stage != 'wansetup')
             $this->_redirect('/admin/index');
 
         $request = $this->getRequest();
@@ -141,7 +141,7 @@ class SetupController extends Page
 			}
         }
 		if ($request->isAjax()) {
-			// DEPRECATED: echo $wan_success ? "SUCCESS" : "FAILURE";
+			file_put_contents(ROOT_DIR . '/data/configured',time());
 			echo 'SUCCESS';
 			exit;
 		}

@@ -46,6 +46,44 @@ class NetAidManager
         return $wifi_list;
     }
 
+    static public function list_stored_wifi()
+    {
+        $client = new NakdClient();
+        $output = $client->doCommand('wlan_list_stored');
+        $wifi_list = array();
+        if(is_array($output)) {
+			foreach($output as $i => $wifi) {
+				$ssid = $wifi['ssid'];
+				$enctype = $wifi['encryption'];
+				if ($enctype == 'none')
+					$enctype = 'Open';
+				$wifi_list[$ssid] = array('encryption'=>$enctype,'auto'=>$wifi['auto']);
+			}
+			asort($wifi_list);
+		}
+        return $wifi_list;
+    }
+    
+	static public function set_stored_wifi($ssid,$properties)
+	{
+		$properties['ssid']=$ssid;
+		
+        $client = new NakdClient();
+        $output = $client->doCommand('wlan_modify_stored',$properties);
+        
+		return var_dump($properties);
+	}
+    
+	static public function del_stored_wifi($ssid)
+	{
+		$properties['ssid']=$ssid;
+		
+        $client = new NakdClient();
+        $output = $client->doCommand('wlan_forget',$properties);
+        
+		return var_dump($properties);
+	}
+
     static public function setup_wan($ssid, $key)
     {
 		if($ssid != _('Wired connection')) {
@@ -54,9 +92,9 @@ class NetAidManager
 			$wifi_list = NetAidManager::list_wifi();
 			$enctype = $wifi_list[$ssid];
 			$client = new NakdClient();
-			$output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE));
+			$output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE, 'auto' => TRUE));
 		} else {	# reset uplink wifi
-			$output = $client->doCommand('wlan_disconnect'); // <- here you'll have to disable global autoconnect, too, and let user re-enable it
+			$output = $client->doCommand('wlan_disconnect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE, 'auto' => FALSE)); // <- here you'll have to disable global autoconnect, too, and let user re-enable it
 		}
 		
         return true;
@@ -84,7 +122,10 @@ class NetAidManager
     {
         $client = new NakdClient();		
         $output = $client->doCommand('stage_current');
-		if(!isset($output['name']) || !file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'reset' );
+		if($output['name']=='reset') {
+			if(file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'wansetup' );
+			if(file_exists(ROOT_DIR . '/data/configured')) $output = array( 'name' => 'default' );
+		}
         return $output['name'];
     }
 
@@ -109,7 +150,6 @@ class NetAidManager
 
         $client = new NakdClient();
         $output = $client->doCommand('stage_set',$stage);
-		//sleep(3);
         return true;
     }
 
@@ -169,21 +209,31 @@ class NetAidManager
         }
     }
 
+    static public function routing_status()
+    {
+		$cur_stage = self::get_stage();
+		if($cur_stage != 'offline' && $cur_stage != 'reset') {
+			$mode = TRUE;
+		} else {
+			$mode = FALSE;
+		}
+        return $mode;
+    }
+
     static public function toggle_routing($mode)
     {
-        if ($mode != 'on')
-            $mode = 'off';
 		$cur_stage = self::get_stage();
 		if($cur_stage != 'vpn' && $cur_stage != 'tor') {
-			if($mode == 'on') {
-				self::set_stage('offline');
-			} else {
+			if($mode == 'on' && $cur_stage == 'offline') {
 				self::set_stage('online');
+			} else {
+				self::set_stage('offline');
 			}
 		}
         return true;
     }
 
+	// FIXME!
     static public function toggle_broadcast($mode)
     {
         if ($mode != 'on')
@@ -196,20 +246,7 @@ class NetAidManager
         return true;
     }
 
-    static public function routing_status()
-    {
-		// DEPRECATED:
-        // $setting = shell_exec('uci show firewall.@forwarding[0].enabled');
-        // $mode = substr($setting, -3, 1);
-		$cur_stage = self::get_stage();
-		if($cur_stage == 'offline' || $cur_stage == 'reset') {
-			$mode = FALSE;
-		} else {
-			$mode = TRUE;
-		}
-        return $mode;
-    }
-
+	// FIXME!
     static public function broadcast_hidden_status()
     {
         // $setting = shell_exec('uci show wireless.@wifi-iface[1].hidden');
