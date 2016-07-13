@@ -46,18 +46,22 @@
 		}
 		
         function ajaxrefresh(url, element) {
-			if(runningIntervals[url] != true) {
-				runningIntervals[url] = true;
+			if(typeof runningIntervals[url] == 'undefined') {
+				runningIntervals[url] = 0;
+			}
+			if(runningIntervals[url] <= 0) {
+				runningIntervals[url] = 30;
 				$.ajax({
 					type: "GET",
 					url: url,
 					success: function(data) {
-						runningIntervals[url] = false;
+						runningIntervals[url] = 0;
 						$(element).html(data);
 					}
 				});
 			} else {
-				console.log('Skipping AJAX refresh. Previous instance still busy for '+url);
+				runningIntervals[url]--;
+				console.log('Skipping AJAX refresh. Previous instance still busy for "'+url+'". Waiting '+runningIntervals[url]+' more ticks until forcing a new call.');
 			}
 		}
 
@@ -123,6 +127,7 @@
                 type: "GET",
                 url: "/admin/tor_status",
                 success: function(data) {
+					// DEBUG: $('.progress').html(data);
                     $('#torprogressbar').css('width', data + '%');
                     if (data == '100') {
                         $("#TorStatus").html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
@@ -138,6 +143,7 @@
                 type: "GET",
                 url: "/admin/vpn_status",
                 success: function(data) {
+					// DEBUG: $('.progress').html(data);
                     $('#vpnprogressbar').css('width', data + '%');
                     if (data == '100') {
                         $("#VpnStatus").html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');

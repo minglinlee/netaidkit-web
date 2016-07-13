@@ -19,19 +19,20 @@ class AdminController extends Page
     public function index()
     {
 		$cur_stage = NetAidManager::get_stage();
+        $routing_status = NetAidManager::routing_status();
 
         $vpn_obj = new Ovpn();
         $vpn_options = $vpn_obj->getOptions();
         $cur_vpn = basename($vpn_obj->getCurrent());
 
         $tor_status = $this->_get_tor_status();
-        $vpn_status = $this->_get_vpn_status();
-        $routing_status = NetAidManager::routing_status();
+        //$vpn_status = $this->_get_vpn_status();
 
         $params = array('cur_stage' => $cur_stage, 'wan_ssid' => '',
                         'vpn_options' => $vpn_options, 'cur_vpn' => $cur_vpn,
                         'tor_status' => $tor_status, 'vpn_status' => $vpn_status,
                         'routing_status' => $routing_status);
+                        
         $view = new View('admin', $params);
         return $view->display();
     }
@@ -45,7 +46,7 @@ class AdminController extends Page
 	public function get_wan_status()
 	{
 		$request = $this->getRequest();
-		$wan_ssid = NetAidManager::wan_ssid().' <i>('.NetAidManager::get_stage().')</i>';   // DEBUG: 
+		$wan_ssid = NetAidManager::wan_ssid().' <i>('.NetAidManager::get_stage().')</i>';
 		if ($wan_ssid == 'NETAIDKIT')
 			$wan_ssid = _('Wired connection');
 		$params = $wan_ssid;
@@ -127,6 +128,17 @@ class AdminController extends Page
 
     protected function _get_tor_status()
     {
+		$client = new NakdClient();
+		$output = $client->doCommand('tor','GETINFO status/bootstrap-phase');
+		// example output: 250-status/bootstrap-phase=NOTICE BOOTSTRAP PROGRESS=100 TAG=done SUMMARY="Done"
+        preg_match_all('/PROGRESS\=(\d{1,3})\\ TAG/', $output[0], $bootstrap);
+		$progress = '0';
+		if (!empty($bootstrap[1][0])) {
+			$progress = $bootstrap[1][0];
+		}
+		return $progress;
+		
+		/* DEPRECATED:
         if (file_exists($this->_torLogfile)) {
             $log = file_get_contents($this->_torLogfile);
 
@@ -141,9 +153,8 @@ class AdminController extends Page
             }
 
             return $log.' #  '.$progress;
-        } else {
-            return 'not running';
-        }
+        */
+			
     }
 
     public function toggle_vpn()
@@ -229,15 +240,13 @@ class AdminController extends Page
     protected function _get_vpn_status()
     {
 		$client = new NakdClient();
-        $output = $client->doCommand('openvpn','state');
+        $output = $client->doCommand('openvpn','state')[0];
 
-		if(isset($output['error'])) {
-			$result = 'not running';
-		} else {
-			$result = 'not running';
+		$result = 'not running';
+		if(!isset($output['error'])) {
 			if(isset($output['state'])) {
 				switch($output['state']) {
-						case 'CONNECTING':
+						case 'TCP_CONNECT':
 							@$t_start = $output['timestamp'];
 							$t_sec = time() - $t_start;
 							$estimated_sec = 30;
@@ -267,35 +276,7 @@ class AdminController extends Page
 				}
 			}
 		}
-		
-		/* DEPRECATED
-        if (file_exists($this->_vpnLogfile)) {
-            $log = file_get_contents($this->_vpnLogfile);
-
-            if (strstr($log, 'Initialization Sequence Completed'))
-                return '100';
-
-            if (strstr($log, 'Peer Connection Initiated'))
-                return '90';
-
-            $s_start = substr($log, 0, 24);  // deprecated log warnings disable functionality of strpos($log,'OpenVPN')-1
-            
-            if (!$s_start)
-                return 'not running';
-
-            @$t_start = strtotime($s_start);
-            $t_sec = time() - $t_start;
-            $estimated_sec = 30;
-
-            if ($t_sec > $estimated_sec)
-                $progress = 80;
-            else {
-                $progress = (80 / $estimated_sec) * $t_sec;
-            }
-
-            return strval(intval($progress));
-        }*/
-
+	
         return $result;
     }
     
