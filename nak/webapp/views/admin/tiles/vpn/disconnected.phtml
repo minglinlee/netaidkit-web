@@ -24,5 +24,5 @@
 				<br><br>
 			</form>
 		</div>
-		<a id="vpnConnectBtn" class="btn <?=($this->_params['cur_stage'] != STAGE_TOR && count($this->_params['vpn_options'])?'btn-primary':'btn-disabled')?> btn-lg btn-block" data-toggle="modal" <?=($this->_params['cur_stage'] != STAGE_TOR ? 'data-target="#vpnModal" href="online.html#"':'href=""');?>><?php echo _('Connect to VPN'); ?></a>
+		<a id="vpnConnectBtn" class="btn <?=($this->_params['cur_stage'] != 'tor' && count($this->_params['vpn_options'])?'btn-primary':'btn-disabled')?> btn-lg btn-block" data-toggle="modal" <?=($this->_params['cur_stage'] != 'tor' ? 'data-target="#vpnModal" href="online.html#"':'href=""');?>><?php echo _('Connect to VPN'); ?></a>
 </div>

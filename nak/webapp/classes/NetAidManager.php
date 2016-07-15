@@ -212,7 +212,7 @@ class NetAidManager
     static public function routing_status()
     {
 		$cur_stage = self::get_stage();
-		if($cur_stage != 'offline' && $cur_stage != 'reset') {
+		if($cur_stage != 'offline' && $cur_stage != 'reset' && $cur_stage != 'tor' && $cur_stage != 'vpn') {
 			$mode = TRUE;
 		} else {
 			$mode = FALSE;

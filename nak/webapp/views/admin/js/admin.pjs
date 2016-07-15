@@ -1,7 +1,7 @@
 <script type="text/javascript">
     $(document).ready(function() {
 
-		// general interval interrupt
+		// general repeating interval interrupt
 		pauseMainInterval = 0;
 		runningIntervals = {};
 		setInterval(function() {
@@ -10,20 +10,39 @@
 				// routing state (can be paused to wait for stage changes)
 				if(pauseMainInterval == 0) {
 					// routing toggle switch state
-					$.ajax({
-						type: "GET",
-						url: "/admin/routing_status",
-						success: function(state) {
-							//$('#nroutingswitch').bootstrapSwitch('state', (1-state) );
-							if(state) {
-								$('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off');
-							} else {
-								$('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on');
-							}
-						}
-					});
+					ajaxrefresh('/admin/routing_status','',
+					 "var state=data; if(state) { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off'); } else { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on'); }"
+					);
 				}
-		}, 5000);
+		}, 2000);
+		
+        function ajaxrefresh(url, element, successfunction) {
+			if(typeof runningIntervals[url] == 'undefined') {
+				runningIntervals[url] = 0;
+			}
+			if(runningIntervals[url] <= 0) {
+				runningIntervals[url] = 30;
+				$.ajax({
+					type: "GET",
+					url: url,
+					success: function(data) {
+						runningIntervals[url] = 0;
+						if(successfunction) {
+							eval(successfunction);
+						} else {
+							$(element).html(data);
+						}
+					}
+				});
+			} else {
+				runningIntervals[url]--;
+				console.log('Skipping AJAX refresh. Previous instance still busy for "'+url+'". Waiting '+runningIntervals[url]+' more ticks until forcing a new call.');
+			}
+		}
+
+		function spinner(element) {
+			$(element).html('<div class=\'spinner\' style=\'padding-top: 24px;\'><div class=\'spinner-loader\'></div></div>');
+		}
 
         function _tr(string, action) {
 			$.post("client/translate",
@@ -45,31 +64,11 @@
 			});				
 		}
 		
-        function ajaxrefresh(url, element) {
-			if(typeof runningIntervals[url] == 'undefined') {
-				runningIntervals[url] = 0;
-			}
-			if(runningIntervals[url] <= 0) {
-				runningIntervals[url] = 30;
-				$.ajax({
-					type: "GET",
-					url: url,
-					success: function(data) {
-						runningIntervals[url] = 0;
-						$(element).html(data);
-					}
-				});
-			} else {
-				runningIntervals[url]--;
-				console.log('Skipping AJAX refresh. Previous instance still busy for "'+url+'". Waiting '+runningIntervals[url]+' more ticks until forcing a new call.');
-			}
-		}
+        //
+        //	higher level AJAX GUI functions
+        //
 
-		function spinner(element) {
-			$(element).html('<div class=\'spinner\'><div class=\'spinner-loader\'></div></div>');
-		}
-
-        function update_wifi() {
+        function updateWifi() {
 			$('#wifi-list').html('<div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div>');
             $.ajax({
                 type: "GET",
@@ -80,7 +79,7 @@
                 }
             });
         }
-        update_wifi();
+        updateWifi();
         
         function updateTiles() {
 			// clear all intervals first
@@ -122,38 +121,28 @@
 			});
         }
 
+        <?php if ( ($this->_params['cur_stage'] == 'tor'
+                    && $this->_params['tor_status'] != '100') ||
+                   ($this->_params['cur_stage'] == 'vpn'
+                    && $this->_params['vpn_status'] != '100') ): ?>
+						updateTiles();
+        <?php endif; ?>
+
         function updateTorStatus() {
-            $.ajax({
-                type: "GET",
-                url: "/admin/tor_status",
-                success: function(data) {
-					// DEBUG: $('.progress').html(data);
-                    $('#torprogressbar').css('width', data + '%');
-                    if (data == '100') {
-                        $("#TorStatus").html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
-                        $("#torTile").addClass("connected");
-                        clearInterval(intervaltor);
-                    }
-                }
-            });
+			ajaxrefresh('/admin/tor_status','#torprogressbar',
+			 "$(element).css('width', data + '%'); if (data == '100') { $('#TorStatus').html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>'); $('#torTile').addClass('connected'); clearInterval(intervaltor); }"
+			);
         }
         
         function updateVpnStatus() {
-            $.ajax({
-                type: "GET",
-                url: "/admin/vpn_status",
-                success: function(data) {
-					// DEBUG: $('.progress').html(data);
-                    $('#vpnprogressbar').css('width', data + '%');
-                    if (data == '100') {
-                        $("#VpnStatus").html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
-                        $("#VpnTile").addClass("connected");
-                        $("#vpn_connected").css('display', 'block');
-                        clearInterval(intervalvpn);
-                    }
-                }
-            });
+			ajaxrefresh('/admin/vpn_status','#vpnprogressbar',
+			 "$(element).css('width', data + '%'); if (data == '100') { $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>'); $('#VpnTile').addClass('connected'); $('#vpn_connected').css('display', 'block'); clearInterval(intervalvpn); }"
+            );
         }
+
+        //
+        //	events attached to clickable elements
+        //
 
 		function attacheventtor() {
 			$('.toggle-tor').click(function(event) {
@@ -188,7 +177,7 @@
 						postdata = { 'file': file };
 					}
 					setTimeout( function() {
-						$('#module-vpn .tile .wrapper').html('<br><p id="placeholder"></p>');
+						$('#module-vpn .tile .wrapper').html('<p id="placeholder"></p>');
 						spinner('#module-vpn .tile .wrapper #placeholder');
 					}, 50);
 
@@ -202,7 +191,7 @@
 							if (data == 'SUCCESS') {
 								setTimeout( function() {
 									updateTiles();
-								}, 12000);
+								}, 16000);
 							} else {
 								pushNotification(['Something went wrong toggling the VPN connection. Are you connected to the Internet?','warning','Close']);
 							}
@@ -254,7 +243,7 @@
 			if(!$('#wifi-refresh').hasClass('btn-disabled')) {
 				$('#wifi-refresh').toggleClass('btn-disabled btn-primary');
 				$('#wan-submit').toggleClass('btn-disabled btn-primary');
-				update_wifi();
+				updateWifi();
 				setTimeout(function() {
 					$('#wifi-refresh').toggleClass('btn-primary btn-disabled');
 					$('#wan-submit').toggleClass('btn-primary btn-disabled');
@@ -285,26 +274,6 @@
             $("#myVPN").html(myVPNid);
             $("#myVPNFile").val(myVPNid);
         });
-
-        <?php if ($this->_params['cur_stage'] == STAGE_TOR
-              && $this->_params['tor_status'] != '100'): ?>
-
-        updateTorStatus();
-        intervaltor = setInterval(function() {
-            updateTorStatus();
-        }, 2000);
-
-        <?php endif; ?>
-
-        <?php if ($this->_params['cur_stage'] == STAGE_VPN
-              && $this->_params['vpn_status'] != '100'): ?>
-
-        updateVpnStatus();
-        setInterval(function() {
-            updateVpnStatus();
-        }, 2000);
-
-        <?php endif; ?>
 
         $('#nroutingswitch').on('switchChange.bootstrapSwitch', function(event, state) {
 			pauseMainInterval = 1; setTimeout(function(){ pauseMainInterval = 0; },30000);

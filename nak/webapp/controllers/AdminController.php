@@ -26,7 +26,7 @@ class AdminController extends Page
         $cur_vpn = basename($vpn_obj->getCurrent());
 
         $tor_status = $this->_get_tor_status();
-        //$vpn_status = $this->_get_vpn_status();
+        $vpn_status = $this->_get_vpn_status();
 
         $params = array('cur_stage' => $cur_stage, 'wan_ssid' => '',
                         'vpn_options' => $vpn_options, 'cur_vpn' => $cur_vpn,
@@ -137,24 +137,53 @@ class AdminController extends Page
 			$progress = $bootstrap[1][0];
 		}
 		return $progress;
-		
-		/* DEPRECATED:
-        if (file_exists($this->_torLogfile)) {
-            $log = file_get_contents($this->_torLogfile);
+    }
 
-            preg_match_all('/Bootstrapped (\d{1,3})\%/', $log, $bootstrap);
+    public function vpn_status()
+    {
+        $status = $this->_get_vpn_status();
+        die($status);
+    }
 
-            $progress = '5';
+    protected function _get_vpn_status()
+    {
+		$client = new NakdClient();
+        $output = $client->doCommand('openvpn','state')[0];
 
-            if (!empty($bootstrap[1])) {
-                $progress = end(array_values($bootstrap[1]));
-                if ($progress == '0')
-                    $progress = '5';
-            }
-
-            return $log.' #  '.$progress;
-        */
-			
+		$result = 'not running';
+		if(isset($output['state'])) {
+			switch($output['state']) {
+					case 'TCP_CONNECT':
+						@$t_start = $output['timestamp'];
+						$t_sec = time() - $t_start;
+						$estimated_sec = 30;
+						if ($t_sec > $estimated_sec)
+							$progress = 80;
+						else {
+							$progress = (80 / $estimated_sec) * $t_sec;
+						}
+						$result = strval(intval($progress));
+					break;
+					case 'WAIT': $result = '90'; break;
+					case 'CONNECTED': $result = '100'; break;
+					default: $result = '0';
+					/*
+						WAIT -- (Client only) Waiting for initial response
+						from server.
+						AUTH -- (Client only) Authenticating with server.
+						GET_CONFIG -- (Client only) Downloading configuration options
+						from server.
+						ASSIGN_IP -- Assigning IP address to virtual network
+						interface.
+						ADD_ROUTES -- Adding routes to system.
+						CONNECTED -- Initialization Sequence Completed.
+						RECONNECTING -- A restart has occurred.
+						EXITING -- A graceful exit is in progress.
+					*/
+			}
+		}
+	
+        return $result;
     }
 
     public function toggle_vpn()
@@ -229,55 +258,6 @@ class AdminController extends Page
                 exit;
             }
         }
-    }
-
-    public function vpn_status()
-    {
-        $status = $this->_get_vpn_status();
-        die($status);
-    }
-
-    protected function _get_vpn_status()
-    {
-		$client = new NakdClient();
-        $output = $client->doCommand('openvpn','state')[0];
-
-		$result = 'not running';
-		if(!isset($output['error'])) {
-			if(isset($output['state'])) {
-				switch($output['state']) {
-						case 'TCP_CONNECT':
-							@$t_start = $output['timestamp'];
-							$t_sec = time() - $t_start;
-							$estimated_sec = 30;
-							if ($t_sec > $estimated_sec)
-								$progress = 80;
-							else {
-								$progress = (80 / $estimated_sec) * $t_sec;
-							}
-							$result = intval($progress);
-						break;
-						case 'WAIT': $result = 90; break;
-						case 'CONNECTED': $result = 100; break;
-						default: $result = 0;
-						/*
-							WAIT -- (Client only) Waiting for initial response
-							from server.
-							AUTH -- (Client only) Authenticating with server.
-							GET_CONFIG -- (Client only) Downloading configuration options
-							from server.
-							ASSIGN_IP -- Assigning IP address to virtual network
-							interface.
-							ADD_ROUTES -- Adding routes to system.
-							CONNECTED -- Initialization Sequence Completed.
-							RECONNECTING -- A restart has occurred.
-							EXITING -- A graceful exit is in progress.
-						*/
-				}
-			}
-		}
-	
-        return $result;
     }
     
     public function display_tor()
