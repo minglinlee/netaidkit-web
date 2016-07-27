@@ -2,41 +2,56 @@
     $(document).ready(function() {
 
 		// general repeating interval interrupt
-		pauseMainInterval = 0;
+		pauseMainInterval = '';
 		runningIntervals = {};
+		runningIntQueue = [];
 		setInterval(function() {
 				// wan status
 				ajaxrefresh('/admin/get_wan_status','#wan-connection');
-				// routing state (can be paused to wait for stage changes)
-				if(pauseMainInterval == 0) {
-					// routing toggle switch state
-					ajaxrefresh('/admin/routing_status','',
-					 "var state=data; if(state) { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off'); } else { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on'); }"
-					);
-				}
-		}, 2000);
+		}, 3000);
+		setInterval(function() {
+				// routing toggle switch state
+				ajaxrefresh('/admin/routing_status','',
+				 "var state=data; if(state) { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off'); } else { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on'); }"
+				);
+		}, 15000);
 		
         function ajaxrefresh(url, element, successfunction) {
+			// fix for limited memory: define a static, symbolic url, and use a queue for the requests
+			var doubleEntry = 0;
+			for (var i = 0; i < runningIntQueue.length; i++) {
+				if (typeof runningIntQueue[i] != 'undefined') if (runningIntQueue[i].u == url) doubleEntry ++;
+			}
+			if(doubleEntry<3) runningIntQueue.push({'u':url,'e':element,'f':successfunction});
+			url = 'singlerequest';
+			// check to see if we are already running/waiting for an interval
 			if(typeof runningIntervals[url] == 'undefined') {
 				runningIntervals[url] = 0;
 			}
+			// if not, perform the AJAX function
 			if(runningIntervals[url] <= 0) {
 				runningIntervals[url] = 30;
-				$.ajax({
-					type: "GET",
-					url: url,
-					success: function(data) {
-						runningIntervals[url] = 0;
-						if(successfunction) {
-							eval(successfunction);
-						} else {
-							$(element).html(data);
+				var req = runningIntQueue.shift();
+				console.log('Requesting AJAX refresh now for "'+req.u+'".');
+				if(pauseMainInterval != req.u) {
+					$.ajax({
+						type: "GET",
+						url: req.u,
+						success: function(data) {
+							runningIntervals[url] = 0;
+							if(req.f) {
+								eval(req.f);
+							} else {
+								$(req.e).html(data);
+							}
 						}
-					}
-				});
+					});
+				} else {
+					console.log('Refresh interval paused for "'+req.u+'".');
+				}
 			} else {
+				console.log('AJAX request busy. '+runningIntervals[url]+' ticks until forcing new call. Queue size is '+runningIntQueue.length+'.');
 				runningIntervals[url]--;
-				console.log('Skipping AJAX refresh. Previous instance still busy for "'+url+'". Waiting '+runningIntervals[url]+' more ticks until forcing a new call.');
 			}
 		}
 
@@ -94,7 +109,7 @@
 					updateTorStatus();
 					intervaltor = setInterval(function() {
 						updateTorStatus();
-					}, 3000);
+					}, 2000);
 					attacheventtor();
 				},
 				failure: function() {
@@ -111,7 +126,7 @@
 					updateVpnStatus();
 					intervalvpn = setInterval(function() {
 						updateVpnStatus();
-					}, 3000);
+					}, 2000);
 					attacheventvpn();
 				},
 				failure: function() {
@@ -276,12 +291,12 @@
         });
 
         $('#nroutingswitch').on('switchChange.bootstrapSwitch', function(event, state) {
-			pauseMainInterval = 1; setTimeout(function(){ pauseMainInterval = 0; },30000);
+			pauseMainInterval = '/admin/routing_status'; setTimeout(function(){ pauseMainInterval = ''; },30000);
             if (state == 1) {
-                console.log('disable insecure routing (switch on)');
+                console.log('Insecure routing disabled (switch on).');
                 $sdata = 'off';
             } else {
-                console.log('enable insecure routing (switch off)');
+                console.log('Insecure routing enabled (switch off).');
                 $sdata = 'on';
             };
             $.ajax({
