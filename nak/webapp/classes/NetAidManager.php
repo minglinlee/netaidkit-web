@@ -30,7 +30,7 @@ class NetAidManager
     {
         $client = new NakdClient();
         $output = $client->doCommand('wlan_list');
-
+        $strength_list = array();
         $wifi_list = array();
         if(is_array($output)) {
 			foreach($output as $i => $wifi) {
@@ -38,11 +38,15 @@ class NetAidManager
 				$enctype = $wifi['encryption'];
 				if ($enctype == 'none')
 					$enctype = 'Open';
-				$wifi_list[$ssid] = $enctype;
+				$strength = round(($wifi['quality']/$wifi['quality_max'])*1000)/10;
+				$strength_list[$strength] = array('ssid'=>$ssid,'encryption'=>$enctype,'strength'=>$strength);
 			}
-			asort($wifi_list);
+			krsort($strength_list);
+			foreach($strength_list as $strength => $wifi) {
+				$wifi_list[$wifi['ssid']] = $wifi;
+			}
 		}
-		$wifi_list=array(_('Wired connection')=>'Wired')+$wifi_list; // add wired connection
+		$wifi_list=array(_('Wired connection')=>array('encryption'=>'Wired','strength'=>100))+$wifi_list; // add wired connection
         return $wifi_list;
     }
 
@@ -182,12 +186,13 @@ class NetAidManager
     static public function wan_ssid()
     {
         $client = new NakdClient();
-        $output = $client->doCommand('wlan_current','WLAN');
+        $connection = $client->doCommand('connectivity');
         // DEBUG: var_dump($client->doCommand('stage_info'));
         // DEBUG: var_dump($output);
-        if($output['disabled']) {
+        if(!$connection['local']) {
 			return _('<span style="color: red;">Disconnected</span>');
 		} else {
+			$output = $client->doCommand('wlan_current','WLAN');
 			if ($output == 0)
 				return _('Wired connection');
 			else
@@ -211,8 +216,10 @@ class NetAidManager
 
     static public function routing_status()
     {
+        $client = new NakdClient();		
+        $stage_req = $client->doCommand('stage_status');
 		$cur_stage = self::get_stage();
-		if($cur_stage != 'offline' && $cur_stage != 'reset' && $cur_stage != 'tor' && $cur_stage != 'vpn') {
+		if((isset($stagereq['name']) && $stagereq['name']=='online') || ($cur_stage != 'offline' && $cur_stage != 'reset' && $cur_stage != 'tor' && $cur_stage != 'vpn')) {
 			$mode = TRUE;
 		} else {
 			$mode = FALSE;

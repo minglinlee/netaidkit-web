@@ -2,7 +2,7 @@
 
 class LogsController extends Page
 {
-    protected $_allowed_actions = array('index', 'download_tor', 'download_vpn');
+    protected $_allowed_actions = array('index', 'ajax_tor', 'ajax_vpn', 'download_tor', 'download_vpn');
 
     protected $_torLogFile = '/var/log/tor/notices.log';
     protected $_vpnLogFile = '/var/log/openvpn.log';
@@ -23,6 +23,18 @@ class LogsController extends Page
         $params = array('torLog' => $torLog, 'vpnLog' => $vpnLog);
         $view = new View('logs', $params);
         return $view->display();
+    }
+
+    public function ajax_tor()
+    {
+        echo $this->_getTorLog();
+        exit;
+    }
+
+    public function ajax_vpn()
+    {
+        echo $this->_getVpnLog();
+        exit;
     }
 
     public function download_tor()

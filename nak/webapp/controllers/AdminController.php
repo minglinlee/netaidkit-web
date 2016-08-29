@@ -46,7 +46,7 @@ class AdminController extends Page
 	public function get_wan_status()
 	{
 		$request = $this->getRequest();
-		$wan_ssid = NetAidManager::wan_ssid().' <i>('.NetAidManager::get_stage().')</i>';
+		$wan_ssid = NetAidManager::wan_ssid(); // DEBUG: .' <i>('.NetAidManager::get_stage().')</i>';
 		if ($wan_ssid == 'NETAIDKIT')
 			$wan_ssid = _('Wired connection');
 		$params = $wan_ssid;

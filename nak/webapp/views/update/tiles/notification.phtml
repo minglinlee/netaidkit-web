@@ -1,4 +1,4 @@
-<?php $updater = new Updater(); $updatestatus = $updater->updateAvailable(); if($updatestatus == null) { ?>
+<?php $updater = new Updater(); $updatestatus = $updater->updateAvailable(); if($updatestatus === null) { ?>
 	<div class="tile error">
 		<span class="fui-cross"></span> <?php echo _('The update server cannot be contacted!'); ?>
 	</div>

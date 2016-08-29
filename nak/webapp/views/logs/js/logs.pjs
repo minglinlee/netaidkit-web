@@ -1,0 +1,29 @@
+<script type="text/javascript">
+    $(document).ready(function() {
+		logs = {}
+		logs.tor = '';
+		logs.vpn = '';
+		
+		setInterval(function() {
+			$.ajax({
+				type: 'GET',
+				url: '/logs/ajax_tor',
+				success: function(data) {
+					if(data != '') {
+						$('div.tile.log.wrap.tor').html(data);
+					}
+				}
+			});
+			$.ajax({
+				type: 'GET',
+				url: '/logs/ajax_vpn',
+				success: function(data) {
+					if(data != '') {
+						$('div.tile.log.wrap.vpn').html(data);
+					}
+				}
+			});
+		}, 3000);
+		
+    });
+</script>

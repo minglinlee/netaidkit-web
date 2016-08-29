@@ -9,6 +9,7 @@
 				// wan status
 				ajaxrefresh('/admin/get_wan_status','#wan-connection');
 		}, 3000);
+		ajaxrefresh('/admin/get_wan_status','#wan-connection');
 		setInterval(function() {
 				// routing toggle switch state
 				ajaxrefresh('/admin/routing_status','',
@@ -269,14 +270,15 @@
 
         $('#wan-submit').click(function(event) {
 			if(!$('#wifi-refresh').hasClass('btn-disabled')) {        
+				pauseMainInterval = '/admin/get_wan_status';
+				setTimeout(function(){ pauseMainInterval = ''; },8000);
 				spinner('#wan-connection');
 				$.ajax({
-					type: "POST",
-					url: "/admin/wan",
+					type: 'POST',
+					url: '/admin/wan',
 					data: $('form#wan-form').serialize(),
 					success: function(data) {
 						if (data == 'SUCCESS') {
-						//	window.location.href = '/admin/index';
 						}
 					},
 				});
@@ -291,7 +293,8 @@
         });
 
         $('#nroutingswitch').on('switchChange.bootstrapSwitch', function(event, state) {
-			pauseMainInterval = '/admin/routing_status'; setTimeout(function(){ pauseMainInterval = ''; },30000);
+			pauseMainInterval = '/admin/routing_status';
+			setTimeout(function(){ pauseMainInterval = ''; },12000);
             if (state == 1) {
                 console.log('Insecure routing disabled (switch on).');
                 $sdata = 'off';
