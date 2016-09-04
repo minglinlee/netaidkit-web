@@ -31,7 +31,7 @@
 			}
 			// if not, perform the AJAX function
 			if(runningIntervals[url] <= 0) {
-				runningIntervals[url] = 30;
+				runningIntervals[url] = 12;
 				var req = runningIntQueue.shift();
 				console.log('Requesting AJAX refresh now for "'+req.u+'".');
 				if(pauseMainInterval != req.u) {

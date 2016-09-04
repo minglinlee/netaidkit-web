@@ -223,7 +223,7 @@ class AdminController extends Page
         $request = $this->getRequest();
 
         if ($request->isAjax()) {
-            NetAidManager::scan_wifi();
+            // DEPRECATED: NetAidManager::scan_wifi();
 			$wifi_list = NetAidManager::list_wifi();
             $params = array('wifi_list' => $wifi_list);
             $view = new View('wifi_ajax', $params);
