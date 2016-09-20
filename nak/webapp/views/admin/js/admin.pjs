@@ -1,15 +1,33 @@
 <script type="text/javascript">
     $(document).ready(function() {
-
+		// get general translation strings
+		content={};
+		_tr('<span style="color: red;">Disconnected</span>','content.disconnected=htmlDecode(string)')
+		
 		// general repeating interval interrupt
 		pauseMainInterval = '';
 		runningIntervals = {};
 		runningIntQueue = [];
+		
 		setInterval(function() {
 				// wan status
-				ajaxrefresh('/admin/get_wan_status','#wan-connection');
+				nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+					if(data.result.local==true) {
+						nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+							return data.result.ssid;
+						});
+					} else {
+						nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+							if(data.result.connecting!=0) {
+								return data.result.network+' (connecting)';
+							} else {
+								return content.disconnected;
+							}
+						});
+					}
+				});
 		}, 3000);
-		ajaxrefresh('/admin/get_wan_status','#wan-connection');
+		
 		setInterval(function() {
 				// routing toggle switch state
 				ajaxrefresh('/admin/routing_status','',
@@ -17,6 +35,22 @@
 				);
 		}, 15000);
 		
+        function nakdquery(json, element, successfunction) {
+			$.post("/nak-rpc",json,
+			function(data, status){
+				if(status=='success') {
+					if(typeof successfunction!='undefined') {
+						data = JSON.parse(data);
+						var result = successfunction(data);
+					} else {
+						var result = data;
+					}
+					$(element).html(result);
+					// DEBUG: $(element).html(JSON.stringify(data));
+				}
+			});
+        }
+
         function ajaxrefresh(url, element, successfunction) {
 			// fix for limited memory: define a static, symbolic url, and use a queue for the requests
 			var doubleEntry = 0;
@@ -56,22 +90,22 @@
 			}
 		}
 
-		function spinner(element) {
-			$(element).html('<div class=\'spinner\' style=\'padding-top: 24px;\'><div class=\'spinner-loader\'></div></div>');
+		function spinner(element,padding) {
+			$(element).html('<div class=\'spinner\''+(typeof padding!='undefined'?' style=\'padding-top: '+padding+'px;\'':'')+'><div class=\'spinner-loader\'></div></div>');
 		}
 
         function _tr(string, action) {
-			$.post("client/translate",
+			$.post("/client/translate",
 			{
 				q: string
 			},
 			function(string, status){
-				action;
+				eval(action);
 			});				
 		}
 
         function _echo(element, string) {
-			$.post("client/translate",
+			$.post("/client/translate",
 			{
 				q: string
 			},
@@ -80,12 +114,19 @@
 			});				
 		}
 		
+		function htmlDecode(input)
+		{
+		  var doc = new DOMParser().parseFromString(input, "text/html");
+		  return doc.documentElement.textContent;
+		}
+		
         //
         //	higher level AJAX GUI functions
         //
 
         function updateWifi() {
-			$('#wifi-list').html('<div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div>');
+			//$('#wifi-list').html('<div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div>');
+			spinner('#wifi-list',45);
             $.ajax({
                 type: "GET",
                 url: "/admin/get_wifi",
@@ -165,7 +206,7 @@
 				$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
 				$('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
 				$('.progress').hide();
-				spinner('#module-tor .tile p');
+				spinner('#module-tor .tile p,24');
 				$.ajax({
 					type: "GET",
 					url: "/admin/toggle_tor",
@@ -194,7 +235,7 @@
 					}
 					setTimeout( function() {
 						$('#module-vpn .tile .wrapper').html('<p id="placeholder"></p>');
-						spinner('#module-vpn .tile .wrapper #placeholder');
+						spinner('#module-vpn .tile .wrapper #placeholder',24);
 					}, 50);
 
 					$('#module-tor .tile a').toggleClass('btn-primary').toggleClass('btn-disabled');
@@ -267,8 +308,9 @@
 			}
         });
 
-
-        $('#wan-submit').click(function(event) {
+        $('#wan-form').submit(function(event) {
+			event.preventDefault()
+			$('#wifiModal').modal('hide');
 			if(!$('#wifi-refresh').hasClass('btn-disabled')) {        
 				pauseMainInterval = '/admin/get_wan_status';
 				setTimeout(function(){ pauseMainInterval = ''; },8000);
@@ -282,7 +324,6 @@
 						}
 					},
 				});
-				event.preventDefault();
 			}
         });
 

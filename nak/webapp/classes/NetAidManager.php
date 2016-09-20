@@ -191,7 +191,7 @@ class NetAidManager
         // DEBUG: var_dump($client->doCommand('stage_info'));
         // DEBUG: var_dump($output);
         if(!$connection['local']) {
-			return _('<span style="color: red;">Disconnected</span>').var_dump($connection);
+			return _('<span style="color: red;">Disconnected</span>');
 		} else {
 			$output = $client->doCommand('wlan_current','WLAN');
 			if ($output == 0)
