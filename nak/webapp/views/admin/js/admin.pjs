@@ -36,16 +36,20 @@
 		}, 15000);
 		
         function nakdquery(json, element, successfunction) {
+			console.log('Requesting RPC data from nakd for "'+element+'".');
 			$.post("/nak-rpc",json,
 			function(data, status){
 				if(status=='success') {
 					if(typeof successfunction!='undefined') {
 						data = JSON.parse(data);
+						data.element = element;
 						var result = successfunction(data);
 					} else {
 						var result = data;
 					}
-					$(element).html(result);
+					if(element) {
+						$(element).html(result);
+					}
 					// DEBUG: $(element).html(JSON.stringify(data));
 				}
 			});
@@ -186,14 +190,28 @@
         <?php endif; ?>
 
         function updateTorStatus() {
-			ajaxrefresh('/admin/tor_status','#torprogressbar',
-			 "$(element).css('width', data + '%'); if (data == '100') { $('#TorStatus').html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>'); $('#torTile').addClass('connected'); clearInterval(intervaltor); }"
-			);
+			// DEPRECATED: ajaxrefresh('/admin/tor_status','#torprogressbar',
+			//  "$(element).css('width', data + '%'); if (data == '100') { $('#TorStatus').html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>'); $('#torTile').addClass('connected'); clearInterval(intervaltor); }"
+			// );
+			nakdquery('{"jsonrpc": "2.0", "method": "tor", "params": "GETINFO status/bootstrap-phase", "id": '+Math.floor(Math.random()*1000)+'}','#torprogressbar', function(data) {
+				if(typeof data.error == 'undefined') {
+					var element = data.element;
+					var progress = data.result[0].match("PROGRESS\=(.*)\ TAG")[1];
+					$(element).css('width', progress + '%');
+					if (progress == '100') {
+						$(element).css('width', '100%');
+						$('#TorStatus').html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
+						$('#torTile').addClass('connected'); 
+						clearInterval(intervaltor);
+						clearInterval(intervalvpn);
+					}
+				}
+			});
         }
         
         function updateVpnStatus() {
 			ajaxrefresh('/admin/vpn_status','#vpnprogressbar',
-			 "$(element).css('width', data + '%'); if (data == '100') { $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>'); $('#VpnTile').addClass('connected'); $('#vpn_connected').css('display', 'block'); clearInterval(intervalvpn); }"
+			 "$(element).css('width', data + '%'); if (data == '100') { $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>'); $('#VpnTile').addClass('connected'); $('#vpn_connected').css('display', 'block'); clearInterval(intervalvpn); clearInterval(intervaltor); }"
             );
         }
 
@@ -206,7 +224,7 @@
 				$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
 				$('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
 				$('.progress').hide();
-				spinner('#module-tor .tile p,24');
+				spinner('#module-tor .tile p',24);
 				$.ajax({
 					type: "GET",
 					url: "/admin/toggle_tor",
