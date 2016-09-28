@@ -19,11 +19,6 @@ if ($cur_stage >= STAGE_ONLINE && $_SESSION['logged_in'] == 1 && $_SESSION['upda
         $request->setController('update');
         $request->setAction('index');
     }
-} else {
-    if ($cur_stage != STAGE_ONLINE && $_SERVER['SERVER_NAME'] != '192.168.101.1') {
-        header('Location: http://192.168.101.1/' . $controller . '/' . $action);
-        die();
-    }
 }
 
 try {
