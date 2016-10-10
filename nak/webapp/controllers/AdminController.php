@@ -120,12 +120,14 @@ class AdminController extends Page
         die($status);
     }
 
+	// DEPRECATED
     public function tor_status()
     {
         $status = $this->_get_tor_status();
         die($status);
     }
 
+	// DEPRECATED
     protected function _get_tor_status()
     {
 		$client = new NakdClient();
@@ -139,12 +141,14 @@ class AdminController extends Page
 		return $progress;
     }
 
+	// DEPRECATED
     public function vpn_status()
     {
         $status = $this->_get_vpn_status();
         die($status);
     }
 
+	// DEPRECATED
     protected function _get_vpn_status()
     {
 		$client = new NakdClient();

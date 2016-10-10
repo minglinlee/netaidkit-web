@@ -2,7 +2,8 @@
     $(document).ready(function() {
 		// get general translation strings
 		content={};
-		_tr('<span style="color: red;">Disconnected</span>','content.disconnected=htmlDecode(string)')
+		_tr('<span style="color: red;">Disconnected</span>','content.disconnected=htmlDecode(string)');
+		_tr('connecting','content.connecting=htmlDecode(string)');
 		
 		// general repeating interval interrupt
 		pauseMainInterval = '';
@@ -10,22 +11,24 @@
 		runningIntQueue = [];
 		
 		setInterval(function() {
-				// wan status
-				nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-					if(data.result.local==true) {
-						nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-							return data.result.ssid;
-						});
-					} else {
-						nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-							if(data.result.connecting!=0) {
-								return data.result.network+' (connecting)';
-							} else {
-								return content.disconnected;
-							}
-						});
-					}
-				});
+				if(pauseMainInterval != '/admin/wan') {
+					// wan status
+					nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+						if(data.result.local==true) {
+							nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+								return data.result.ssid;
+							});
+						} else {
+							nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+								if(data.result.connecting!=0) {
+									return data.result.network+' (connecting)';
+								} else {
+									return content.disconnected;
+								}
+							});
+						}
+					});
+				}
 		}, 3000);
 		
 		setInterval(function() {
@@ -190,9 +193,6 @@
         <?php endif; ?>
 
         function updateTorStatus() {
-			// DEPRECATED: ajaxrefresh('/admin/tor_status','#torprogressbar',
-			//  "$(element).css('width', data + '%'); if (data == '100') { $('#TorStatus').html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>'); $('#torTile').addClass('connected'); clearInterval(intervaltor); }"
-			// );
 			nakdquery('{"jsonrpc": "2.0", "method": "tor", "params": "GETINFO status/bootstrap-phase", "id": '+Math.floor(Math.random()*1000)+'}','#torprogressbar', function(data) {
 				if(typeof data.error == 'undefined') {
 					var element = data.element;
@@ -201,7 +201,7 @@
 					if (progress == '100') {
 						$(element).css('width', '100%');
 						$('#TorStatus').html('<?php echo _("<h3>You are connected to Tor</h3>"); ?>');
-						$('#torTile').addClass('connected'); 
+						$('#TorTile').addClass('connected'); 
 						clearInterval(intervaltor);
 						clearInterval(intervalvpn);
 					}
@@ -210,9 +210,44 @@
         }
         
         function updateVpnStatus() {
-			ajaxrefresh('/admin/vpn_status','#vpnprogressbar',
-			 "$(element).css('width', data + '%'); if (data == '100') { $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>'); $('#VpnTile').addClass('connected'); $('#vpn_connected').css('display', 'block'); clearInterval(intervalvpn); clearInterval(intervaltor); }"
-            );
+			nakdquery('{"jsonrpc": "2.0", "method": "openvpn_state", "params": "state", "id": '+Math.floor(Math.random()*1000)+'}','#vpnprogressbar', function(data) {
+				// DEBUG: $('#VpnStatus').html( JSON.stringify(data) );
+				if(typeof data.error == 'undefined') {
+					var element = data.element;
+					var state = data.result[0].state;
+					var progress = 0;
+					if(state == 'AUTH') {
+						var currentTime = new Date()
+						var t_start = data.result[0].timestamp;
+						var t_sec = Math.round( (currentTime.getTime()/1000) - t_start );
+						var estimated_sec = 30;
+						if (t_sec > estimated_sec) {
+							progress = 80;
+						} else {
+							progress = Math.round( (80 / estimated_sec) * t_sec );
+						}
+					}
+					if(state == 'GET_CONFIG') {
+						progress = 90;
+					}
+					if(state == 'CONNECTED') {
+						progress = 100;
+					}
+					$(element).css('width', progress + '%');
+					if (progress == '100') {
+						$(element).css('width', '100%');
+						$('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
+						$('#VpnTile').addClass('connected'); 
+						clearInterval(intervalvpn);
+						clearInterval(intervaltor);
+					}
+				}
+			});
+
+			// DEPRECATED
+			// ajaxrefresh('/admin/vpn_status','#vpnprogressbar',
+			//  "$(element).css('width', data + '%'); if (data == '100') { $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>'); $('#VpnTile').addClass('connected'); $('#vpn_connected').css('display', 'block'); clearInterval(intervalvpn); clearInterval(intervaltor); }"
+            // );
         }
 
         //
@@ -245,35 +280,35 @@
 
 		function attacheventvpn() {
 			$('.toggle-vpn').click(function(event) {
-				if(!$('.toggle-vpn').hasClass('btn-disabled')) {
-					var file = $("#vpnform input[type='radio']:checked").val();
-					var postdata = [];
-					if (typeof(file) != 'undefined') {
-						postdata = { 'file': file };
-					}
-					setTimeout( function() {
-						$('#module-vpn .tile .wrapper').html('<p id="placeholder"></p>');
-						spinner('#module-vpn .tile .wrapper #placeholder',24);
-					}, 50);
+				$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
+				$('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
+				$('.progress').hide();
+				$('#module-vpn .tile .wrapper').html('<p id="placeholder"></p>');
+				spinner('#module-vpn .tile .wrapper #placeholder',24);
 
-					$('#module-tor .tile a').toggleClass('btn-primary').toggleClass('btn-disabled');
-					$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
-					$.ajax({
-						type: "POST",
-						url: "/admin/toggle_vpn",
-						data: postdata,
-						success: function(data) {
-							if (data == 'SUCCESS') {
-								setTimeout( function() {
-									updateTiles();
-								}, 16000);
-							} else {
-								pushNotification(['Something went wrong toggling the VPN connection. Are you connected to the Internet?','warning','Close']);
-							}
-						}
-					});
-					event.preventDefault();
+				var file = $("#vpnform input[type='radio']:checked").val();
+				var postdata = [];
+				if (typeof(file) != 'undefined') {
+					postdata = { 'file': file };
 				}
+
+				$.ajax({
+					type: "POST",
+					url: "/admin/toggle_vpn",
+					data: postdata,
+					success: function(data) {
+						if (data == 'SUCCESS') {
+							var timing = 8000;
+							if($('#VpnTile').hasClass('connected')) { timing = 35000; }
+							setTimeout( function() {
+								updateTiles();
+							}, timing);
+						} else {
+							pushNotification(['Something went wrong toggling the VPN connection. Are you connected to the Internet?','warning','Close']);
+						}
+					}
+				});
+				event.preventDefault();
 			});
 
 			$('.upload-vpn').click(function(event) {
@@ -330,8 +365,7 @@
 			event.preventDefault()
 			$('#wifiModal').modal('hide');
 			if(!$('#wifi-refresh').hasClass('btn-disabled')) {        
-				pauseMainInterval = '/admin/get_wan_status';
-				setTimeout(function(){ pauseMainInterval = ''; },8000);
+				pauseMainInterval = '/admin/wan';
 				spinner('#wan-connection');
 				$.ajax({
 					type: 'POST',
@@ -339,6 +373,18 @@
 					data: $('form#wan-form').serialize(),
 					success: function(data) {
 						if (data == 'SUCCESS') {
+							setTimeout(function(){ pauseMainInterval = ''; },25000);
+							// temporary way to fill WLAN connecting, until nakd supports it
+							setTimeout(function() {
+								var radios = document.getElementsByClassName('wifi-list-radiobtn');
+								var value;
+								for (var i = 0; i < radios.length; i++) {
+									if (radios[i].type === 'radio' && radios[i].checked) {
+										value = radios[i].value; // get value
+									}
+								}
+								$('#wan-connection').html(value+' <i>('+content.connecting+')</i>');
+							 },3000);
 						}
 					},
 				});
