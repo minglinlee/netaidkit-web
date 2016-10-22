@@ -1,5 +1,6 @@
 <script type="text/javascript">
     $(document).ready(function() {
+
         $('#wan-submit').click(function(event) {
             $.ajax({
                 type: "POST",
@@ -7,13 +8,57 @@
                 data: $('form#wan-form').serialize(),
                 success: function(data) {
                     if (data == 'SUCCESS') {
-                        window.location.href = '/user/login';
+                        // check for connectivity
+						setTimeout(function() {
+							setInterval(function() {
+								var fwd_path = '/user/login';
+								// wan status
+								nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+									if(data.result.local==true) {
+										nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+											// connected to SSID, forward to login
+											window.location.href = fwd_path;											
+										});
+									} else {
+										nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+											if(data.result.connecting!=0) {
+												// do nothing, nakd is still connecting
+											} else {
+												// no connection, but forward to login anyway
+												window.location.href = fwd_path;											
+											}
+										});
+									}
+								});
+							}, 3000);
+						}, 22000);
                     } else {
                         alert(data);
                     }
                 },
             });
-            event.preventDefault();
+            // DEPRECATED: event.preventDefault();
         });
+
+        function nakdquery(json, element, successfunction) {
+			console.log('Requesting RPC data from nakd for "'+element+'".');
+			$.post("/nak-rpc",json,
+			function(data, status){
+				if(status=='success') {
+					if(typeof successfunction!='undefined') {
+						data = JSON.parse(data);
+						data.element = element;
+						var result = successfunction(data);
+					} else {
+						var result = data;
+					}
+					if(element) {
+						$(element).html(result);
+					}
+					// DEBUG: $(element).html(JSON.stringify(data));
+				}
+			});
+        }
+        
     });
 </script>

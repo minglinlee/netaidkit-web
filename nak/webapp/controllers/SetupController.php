@@ -130,13 +130,14 @@ class SetupController extends Page
             $ssid = $request->postvar('ssid');
             $key  = $request->postvar('key');
 
-            $wan_success  = NetAidManager::setup_wan($ssid, $key);
+            NetAidManager::setup_wan($ssid, $key);
+			$cur_stage = NetAidManager::get_stage();
 
-            if ($wan_success) {
-                NetAidManager::set_stage('offline');
+            if ($cur_stage != 'offline') {
+                //NetAidManager::set_stage('offline');
                 $this->_addMessage('info', _('Setup complete.'), 'setup');
             } else {
-                NetAidManager::set_stage('offline');
+                //NetAidManager::set_stage('offline');
                 $this->_addMessage('info', _('Setup complete. However, a connection could not be established.'), 'setup');
 			}
         }
