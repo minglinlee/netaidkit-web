@@ -222,6 +222,7 @@ class AdminController extends Page
 		}
     }
 
+	/*	DEPRECATED:
     public function get_wifi()
     {
         $request = $this->getRequest();
@@ -235,6 +236,7 @@ class AdminController extends Page
             exit;
         }
     }
+    */
 
     public function get_stored_wifi()
     {

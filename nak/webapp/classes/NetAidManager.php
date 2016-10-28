@@ -26,6 +26,7 @@ class NetAidManager
         return $output;
     }
 
+	/*	DEPRECATED:
     static public function list_wifi()
     {
         $client = new NakdClient();
@@ -49,6 +50,7 @@ class NetAidManager
 		$wifi_list=array(_('Wired connection')=>array('encryption'=>'Wired','strength'=>100))+$wifi_list; // add wired connection
         return $wifi_list;
     }
+    */
 
     static public function list_stored_wifi()
     {

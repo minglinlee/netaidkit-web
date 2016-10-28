@@ -2,8 +2,9 @@
     $(document).ready(function() {
 		// get general translation strings
 		content={};
-		_tr('<span style="color: red;">Disconnected</span>','content.disconnected=htmlDecode(string)');
-		_tr('connecting','content.connecting=htmlDecode(string)');
+		content.wired = 'Wired connection'; // hard coded, but should be: _tr('Wired connection','wired');
+		_tr('<span style="color: red;">Disconnected</span>','disconnected');
+		_tr('connecting','connecting');
 		
 		// general repeating interval interrupt
 		pauseMainInterval = '';
@@ -107,7 +108,7 @@
 				q: string
 			},
 			function(string, status){
-				eval(action);
+				content[action] = htmlDecode(string);
 			});				
 		}
 
@@ -134,17 +135,50 @@
         function updateWifi() {
 			//$('#wifi-list').html('<div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div>');
 			spinner('#wifi-list',45);
-            $.ajax({
-                type: "GET",
-                url: "/admin/get_wifi",
-                success: function(data) {
-                    $('#wifi-list').html(data);
-                    $('#wifi-list').trigger("create");
-                }
+			// DEPRECATED:
+            //$.ajax({
+            //    type: "GET",
+            //    url: "/admin/get_wifi",
+            //    success: function(data) {
+            //        $('#wifi-list').html(data);
+            //        $('#wifi-list').trigger("create");
+            //    }
+            //});
+            
+            nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_list"}', '#wifi-list', function(data) {
+                // hide password field by default
+				$('#login-pass').hide();
+				$('#login-field-icon').hide();
+				// construct list of wlan stations
+				var html = '<label class="radio"><table style="width: 100%;"><tbody>';
+				html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="Wired" checked="true" id="optionsRadios0" value="'+content.wired+'" data-toggle="radio"><span class="fui-loop"></span> '+content.wired+'</td><td style="text-align: right;"></td></tr>';
+				var i = 0;
+				data.result.forEach( function(entry){
+					i++;
+					entry.strength = Math.round(entry.quality/entry.quality_max*1000)/10;
+					html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="'+entry.encryption+'" id="optionsRadios'+i+'" value="'+entry.ssid+'" data-toggle="radio"><span class="fui-'+(entry.encryption!='Open'?'lock':'eye')+'"></span> '+entry.ssid+'</td>';
+					html += '<td style="text-align: right;"><div class="meter'+(entry.strength<50?(entry.strength<25?' red':' orange'):'')+'"><span style="width: '+entry.strength+'%"></span></div>';
+					html += '</td></tr>';
+				});
+				html += '</tbody></table></label> <div style="height: 1.5em;"></div>';
+				$(data.element).html(html);
+				$(data.element).trigger("create");
+
+				$(".wifi-list-radiobtn").click( function() {
+					var encryption = $('#'+this.id).attr('encryption');
+					if(encryption=='Open' || encryption=='Wired') {
+						$('#login-pass').fadeOut();
+						$('#login-field-icon').fadeOut();
+					} else {
+						$('#login-field-icon').fadeIn();
+						$('#login-pass').fadeIn();
+					}
+				});
             });
+            
         }
-        updateWifi();
-        
+		updateWifi();
+		        
         function updateTiles() {
 			// clear all intervals first
 			if(typeof intervaltor!='undefined') { clearInterval(intervaltor); }
@@ -243,11 +277,6 @@
 					}
 				}
 			});
-
-			// DEPRECATED
-			// ajaxrefresh('/admin/vpn_status','#vpnprogressbar',
-			//  "$(element).css('width', data + '%'); if (data == '100') { $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>'); $('#VpnTile').addClass('connected'); $('#vpn_connected').css('display', 'block'); clearInterval(intervalvpn); clearInterval(intervaltor); }"
-            // );
         }
 
         //
