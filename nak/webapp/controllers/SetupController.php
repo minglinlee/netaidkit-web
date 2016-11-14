@@ -114,45 +114,49 @@ class SetupController extends Page
 
     public function wan()
     {
+      //if (NetAidManager::get_inetstat()) {
+      //        NetAidManager::set_stage('online');
+      //        $this->_addMessage('info', _('Setup complete.'), 'setup');
+      //}
 
-        //if (NetAidManager::get_inetstat()) {
-        //        NetAidManager::set_stage('online');
-        //        $this->_addMessage('info', _('Setup complete.'), 'setup');
-        //}
+      $request = $this->getRequest();
+      if ($request->isPost()) {
+        $ssid = $request->postvar('ssid');
+        $key  = $request->postvar('key');
+        $enctype  = $request->postvar('encryption');
 
+        $wan_success  = NetAidManager::setup_wan($ssid, $key, $enctype);
+
+        /* DEPRECATED:
         $cur_stage = NetAidManager::get_stage();
 
+        if ($cur_stage != 'offline') {
+            //NetAidManager::set_stage('offline');
+            $this->_addMessage('info', _('Setup complete.'), 'setup');
+        } else {
+            //NetAidManager::set_stage('offline');
+            $this->_addMessage('info', _('Setup complete. However, a connection could not be established.'), 'setup');
+        }
+        */
+        if ($request->isAjax()) {
+            // DEBUG: echo $ssid.' | '.$key.' | '.$enctype;
+            echo $wan_success ? "SUCCESS" : "FAILURE";
+            exit;
+        }
+        
+      } else {
+
+        $cur_stage = NetAidManager::get_stage();
         if ($cur_stage != 'reset' && $cur_stage != 'wansetup')
             $this->_redirect('/admin/index');
 
-        $request = $this->getRequest();
-        if ($request->isPost()) {
-            $ssid = $request->postvar('ssid');
-            $key  = $request->postvar('key');
-
-            NetAidManager::setup_wan($ssid, $key);
-			$cur_stage = NetAidManager::get_stage();
-
-            if ($cur_stage != 'offline') {
-                //NetAidManager::set_stage('offline');
-                $this->_addMessage('info', _('Setup complete.'), 'setup');
-            } else {
-                //NetAidManager::set_stage('offline');
-                $this->_addMessage('info', _('Setup complete. However, a connection could not be established.'), 'setup');
-			}
-        }
-		if ($request->isAjax()) {
-			file_put_contents(ROOT_DIR . '/data/configured',time());
-			echo 'SUCCESS';
-			exit;
-		}
-
-        $wifi_list = NetAidManager::scan_wifi();
-        $wifi_list = NetAidManager::list_wifi();
-		
+        // DEPRECATED:
+        //$wifi_list = NetAidManager::scan_wifi();
+        //$wifi_list = NetAidManager::list_wifi();
         $params = array('wifi_list' => $wifi_list);
         $view = new View('setup_wan', $params);
         return $view->display();
+      }
     }
 
     public function disconnected()

@@ -1,22 +1,22 @@
 <div class="tile">
     <?php echo _('<h3>Select a wireless network:</h3>'); ?>
     <form action="/setup/wan" method="POST" id="wan-form">
-        <?php $i=1; foreach ($this->_params['wifi_list'] as $ssid => $enctype): ?>
-            <label class="radio"><input type="radio" name="ssid" id="optionsRadios<?= $i++; ?>"<?php if ($enctype == 'Wired'): ?>checked="true"<?php endif;?>value="<?= htmlspecialchars($ssid, ENT_QUOTES, 'UTF-8'); ?>" data-toggle="radio"><span class="fui-<?php if ($enctype == 'Wired'): ?>loop<?php elseif ($enctype <> 'Open'): ?>lock<?php else: ?>eye<?php endif;?>"></span> <?= htmlspecialchars($ssid, ENT_QUOTES, 'UTF-8'); ?></label>
-        <?php endforeach; ?>
-        <div class="login-form">
-            <div class="form-group">
-                <input name="key" type="password" class="form-control login-field" value="" placeholder="Wireless Password" id="login-pass" />
-                <label class="login-field-icon fui-lock" for="login-pass"></label>
+          <form id="wan-form" action="/setup/wan" method="POST">
+            <div style="position: relative;">
+              <div id="wifi-list"><div class="spinner" style="margin-top: 45px;"><div class="spinner-loader"></div></div></div>
+              <button id="wifi-refresh" type="button" style="position: absolute; border: 2px solid rgb(255, 255, 255); border-radius: 5px; bottom: 6px; right: 24px; z-index: 99999;" class="btn btn-primary btn-sm"><?php echo _('Refresh'); ?></button>
             </div>
-            <a id="wan-submit" data-toggle="modal" data-target="#wanModal" class="btn btn-primary btn-lg btn-block" href="offline.html#">
-                <?php
-                    /// TRANSLATORS: in the context of WiFi network selection
-                    echo _('Connect');
-                ?>
-            </a>
+            <div class="login-form">
+                <div class="form-group">
+                    <input id="encryptiontype" name="encryption" type="hidden" value="" />
+                    <input name="key" type="password" class="form-control login-field" value="" placeholder="<?php echo _('Wireless Password'); ?>" id="login-pass" />
+                    <label id="login-field-icon" class="login-field-icon fui-lock" for="login-pass"></label>
+                </div>
+                <a onclick="$('#wan-form').submit();" id="wan-submit" class="btn btn-primary btn-lg btn-block" data-dismiss="modal" data-target="#wanModal"><?php echo _('Connect'); ?></a>
+            </div>
         </div>
     </form>
 </div>
 
 <?php include ('wireless/modals/connecting.phtml'); ?>
+

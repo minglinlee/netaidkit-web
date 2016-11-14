@@ -256,8 +256,9 @@ class AdminController extends Page
         if ($request->isPost()) {
             $ssid = $request->postvar('ssid');
             $key  = $request->postvar('key');
+            $enctype  = $request->postvar('encryption');
 
-            $wan_success  = NetAidManager::setup_wan($ssid, $key);
+            $wan_success  = NetAidManager::setup_wan($ssid, $key, $enctype);
 
             if ($request->isAjax()) {
                 echo $wan_success ? "SUCCESS" : "FAILURE";

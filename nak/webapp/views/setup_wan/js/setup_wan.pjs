@@ -1,64 +1,149 @@
 <script type="text/javascript">
     $(document).ready(function() {
 
-        $('#wan-submit').click(function(event) {
-            $.ajax({
-                type: "POST",
-                url: "/setup/wan",
-                data: $('form#wan-form').serialize(),
-                success: function(data) {
-                    if (data == 'SUCCESS') {
-                        // check for connectivity
-						setTimeout(function() {
-							setInterval(function() {
-								var fwd_path = '/user/login';
-								// wan status
-								nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-									if(data.result.local==true) {
-										nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-											// connected to SSID, forward to login
-											window.location.href = fwd_path;											
-										});
-									} else {
-										nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-											if(data.result.connecting!=0) {
-												// do nothing, nakd is still connecting
-											} else {
-												// no connection, but forward to login anyway
-												window.location.href = fwd_path;											
-											}
-										});
-									}
-								});
-							}, 3000);
-						}, 22000);
-                    } else {
-                        alert(data);
-                    }
-                },
-            });
-            // DEPRECATED: event.preventDefault();
-        });
+      // hide password field
+      $('#login-pass').hide();
+      $('#login-field-icon').hide();
 
-        function nakdquery(json, element, successfunction) {
-			console.log('Requesting RPC data from nakd for "'+element+'".');
-			$.post("/nak-rpc",json,
-			function(data, status){
-				if(status=='success') {
-					if(typeof successfunction!='undefined') {
-						data = JSON.parse(data);
-						data.element = element;
-						var result = successfunction(data);
-					} else {
-						var result = data;
-					}
-					if(element) {
-						$(element).html(result);
-					}
-					// DEBUG: $(element).html(JSON.stringify(data));
-				}
-			});
+      // get general translation strings
+      content={};
+      content.wired = 'Wired connection'; // hard coded, but should be: _tr('Wired connection','wired');
+
+      // action when submitting form
+      $('#wan-submit').click(function(event) {
+          $.ajax({
+              type: "POST",
+              url: "/setup/wan",
+              data: $('form#wan-form').serialize(),
+              success: function(data) {
+                if (data == 'SUCCESS') {
+                  // check for connectivity
+                  setTimeout(function() {
+                    setInterval(function() {
+                      var fwd_path = '/user/login';
+                      // wan status
+                      nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+                        if(data.result.local==true) {
+                          nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+                            // connected to SSID, forward to login
+                            window.location.href = fwd_path;											
+                          });
+                        } else {
+                          nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
+                            if(data.result.connecting!=0) {
+                              // do nothing, nakd is still connecting
+                            } else {
+                              // no connection, but forward to login anyway
+                              window.location.href = fwd_path;											
+                            }
+                          });
+                        }
+                      });
+                    }, 3000);
+                  }, 25000);
+                } else {
+                    alert('Connection error! Please try again.');
+                }
+              },
+          });
+          // DEPRECATED: event.preventDefault();
+      });
+
+      function spinner(element,padding) {
+        $(element).html('<div class=\'spinner\''+(typeof padding!='undefined'?' style=\'padding-top: '+padding+'px;\'':'')+'><div class=\'spinner-loader\'></div></div>');
+      }
+
+      function nakdquery(json, element, successfunction) {
+        console.log('Requesting RPC data from nakd for "'+element+'".');
+        $.post("/nak-rpc",json,
+        function(data, status){
+          if(status=='success') {
+            if(typeof successfunction!='undefined') {
+              data = JSON.parse(data);
+              data.element = element;
+              var result = successfunction(data);
+            } else {
+              var result = data;
+            }
+            if(element) {
+              $(element).html(result);
+            }
+            // DEBUG: $(element).html(JSON.stringify(data));
+          }
+        });
+      }
+
+      function updateWifi() {
+        spinner('#wifi-list',45);
+            
+        nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_list"}', '#wifi-list', function(data) {
+          // hide password field by default
+          $('#login-pass').hide();
+          $('#login-field-icon').hide();
+          // construct list of wlan stations
+          var html = '<label class="radio"><table style="width: 100%;"><tbody>';
+          html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="Wired" checked="true" id="optionsRadios0" value="'+content.wired+'" data-toggle="radio"><span class="fui-loop"></span> '+content.wired+'</td><td style="text-align: right;"></td></tr>';
+          var i = 0;
+          data.result.forEach( function(entry){
+            i++;
+            entry.strength = Math.round(entry.quality/entry.quality_max*1000)/10;
+            html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="'+entry.encryption+'" id="optionsRadios'+i+'" value="'+entry.ssid+'" data-toggle="radio"><span class="fui-'+(entry.encryption!='Open'?'lock':'eye')+'"></span> '+entry.ssid+'</td>';
+            html += '<td style="text-align: right;"><div class="meter'+(entry.strength<50?(entry.strength<25?' red':' orange'):'')+'"><span style="width: '+entry.strength+'%"></span></div>';
+            html += '</td></tr>';
+          });
+          html += '</tbody></table></label> <div style="height: 1.5em;"></div>';
+          $(data.element).html(html);
+          $(data.element).trigger("create");
+
+          $(".wifi-list-radiobtn").click( function() {
+            var encryption = $('#'+this.id).attr('encryption');
+            $('#encryptiontype').val(encryption);
+            if(encryption=='Open' || encryption=='Wired') {
+              $('#login-pass').fadeOut();
+              $('#login-field-icon').fadeOut();
+            } else {
+              $('#login-field-icon').fadeIn();
+              $('#login-pass').fadeIn();
+            }
+          });
+        });
+        
+      }
+      updateWifi();
+      
+      $('#wifi-refresh').click(function(event) {
+        if(!$('#wifi-refresh').hasClass('btn-disabled')) {
+          $('#wifi-refresh').toggleClass('btn-disabled btn-primary');
+          $('#wan-submit').toggleClass('btn-disabled btn-primary');
+          updateWifi();
+          setTimeout(function() {
+            $('#wifi-refresh').toggleClass('btn-primary btn-disabled');
+            $('#wan-submit').toggleClass('btn-primary btn-disabled');
+          },8000);
         }
+      });
+
+      $('#wan-form').submit(function(event) {
+        event.preventDefault()
+        if(!$('#wifi-refresh').hasClass('btn-disabled')) {        
+          spinner('#wan-connection');
+          $('#wifi-refresh').hide();
+          $('#wan-submit').toggleClass('btn-disabled btn-primary');
+          setInterval(function() {
+            $('#wanModal').modal('show');
+          },1000);
+          $.ajax({
+            type: 'POST',
+            url: '/setup/wan',
+            data: $('form#wan-form').serialize(),
+            success: function(data) {
+              if (data == 'SUCCESS') {
+                // temporary way to fill WLAN connecting, until nakd supports it
+              }
+            },
+          });
+        }
+      });
         
     });
 </script>

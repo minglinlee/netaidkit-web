@@ -90,20 +90,17 @@ class NetAidManager
 		return var_dump($properties);
 	}
 
-    static public function setup_wan($ssid, $key)
+    static public function setup_wan($ssid, $key, $enctype)
     {
-		$client = new NakdClient();
-		if($ssid != _('Wired connection')) {
-			if (empty($ssid))
-				return false;			
-			$wifi_list = NetAidManager::list_wifi();
-			$enctype = $wifi_list[$ssid]['encryption'];
-			if($enctype='psk-mixed') { $enctype = 'psk2'; }
-			$output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE, 'auto' => TRUE));
-		} else {	# reset uplink wifi
-			$output = $client->doCommand('wlan_disconnect'); // <- here you'll have to disable global autoconnect, too, and let user re-enable it
-		}
-		
+      $client = new NakdClient();
+      if($ssid != _('Wired connection')) {
+        if (empty($ssid))
+          return false;			
+        if($enctype='psk-mixed') { $enctype = 'psk2'; }
+        $output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => $key, 'encryption' => $enctype, 'store' => TRUE, 'auto' => TRUE));
+      } else {	# reset uplink wifi
+        $output = $client->doCommand('wlan_disconnect'); // <- here you'll have to disable global autoconnect, too, and let user re-enable it
+      }
         return true;
     }
 
@@ -129,10 +126,10 @@ class NetAidManager
     {
         $client = new NakdClient();		
         $output = $client->doCommand('stage_current');
-		if($output['name']=='reset') {
-			if(file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'wansetup' );
-			if(file_exists(ROOT_DIR . '/data/configured')) $output = array( 'name' => 'default' );
-		}
+        if($output['name']=='reset') {
+          if(file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'wansetup' );
+          if(file_exists(ROOT_DIR . '/data/configured')) $output = array( 'name' => 'default' );
+        }
         return $output['name'];
     }
 
