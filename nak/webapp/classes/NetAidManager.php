@@ -162,7 +162,8 @@ class NetAidManager
         $cur_stage = self::get_stage();
         if ($cur_stage == 'tor') {
             self::set_stage('offline');
-        } elseif ($cur_stage == 'online' || $cur_stage == 'offline') {
+        } elseif ($cur_stage == 'online' || $cur_stage == 'offline' ||
+                  $cur_stage == 'reset') {
             self::set_stage('tor');
         } else {
             return false;
@@ -175,7 +176,8 @@ class NetAidManager
         $cur_stage = self::get_stage();
         if ($cur_stage == 'vpn') {
             self::set_stage('offline');
-        } elseif ($cur_stage == 'online' || $cur_stage == 'offline') {
+        } elseif ($cur_stage == 'online' || $cur_stage == 'offline' ||
+                  $cur_stage == 'reset') {
             self::set_stage('vpn');
         } else {
             return false;
