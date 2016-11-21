@@ -76,6 +76,7 @@
       function updateWifi() {
         spinner('#wifi-list',45);
             
+        nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_scan"}', false);
         nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_list"}', '#wifi-list', function(data) {
           // hide password field by default
           $('#login-pass').hide();
