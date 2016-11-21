@@ -9,7 +9,7 @@ class ClientController extends Page
             I18n::settings_get_autodetect()) {
 
 			$cur_stage = NetAidManager::get_stage();
-			if ($cur_stage != 'reset' && $cur_stage != 'wansetup') {
+			if ($cur_stage != 'setup' && $cur_stage != 'wansetup') {
 				$this->_redirect('/admin/index');
 			} else {
 				$this->_redirect('/setup/index');

@@ -126,7 +126,7 @@ class NetAidManager
     {
         $client = new NakdClient();		
         $output = $client->doCommand('stage_current');
-        if($output['name']=='reset') {
+        if($output['name']=='setup') {
           if(file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'wansetup' );
           if(file_exists(ROOT_DIR . '/data/configured')) $output = array( 'name' => 'default' );
         }
@@ -143,7 +143,7 @@ class NetAidManager
 	static public function init_stage()
 	{
         $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == 'reset') header('Location: /setup/ap');
+        if ($cur_stage == 'setup') header('Location: /setup/ap');
 		return $cur_stage;
 	}
 	
@@ -163,7 +163,7 @@ class NetAidManager
         if ($cur_stage == 'tor') {
             self::set_stage('offline');
         } elseif ($cur_stage == 'online' || $cur_stage == 'offline' ||
-                  $cur_stage == 'reset') {
+                  $cur_stage == 'setup') {
             self::set_stage('tor');
         } else {
             return false;
@@ -177,7 +177,7 @@ class NetAidManager
         if ($cur_stage == 'vpn') {
             self::set_stage('offline');
         } elseif ($cur_stage == 'online' || $cur_stage == 'offline' ||
-                  $cur_stage == 'reset') {
+                  $cur_stage == 'setup') {
             self::set_stage('vpn');
         } else {
             return false;
@@ -221,7 +221,7 @@ class NetAidManager
         $client = new NakdClient();		
         $stage_req = $client->doCommand('stage_status');
 		$cur_stage = self::get_stage();
-		if((isset($stagereq['name']) && $stagereq['name']=='online') || ($cur_stage != 'offline' && $cur_stage != 'reset' && $cur_stage != 'tor' && $cur_stage != 'vpn')) {
+		if((isset($stagereq['name']) && $stagereq['name']=='online') || ($cur_stage != 'offline' && $cur_stage != 'setup' && $cur_stage != 'tor' && $cur_stage != 'vpn')) {
 			$mode = TRUE;
 		} else {
 			$mode = FALSE;

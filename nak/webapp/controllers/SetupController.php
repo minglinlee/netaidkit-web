@@ -13,7 +13,7 @@ class SetupController extends Page
     {
         $cur_stage = NetAidManager::get_stage();
 
-        if ($cur_stage != 'reset' && $cur_stage != 'wansetup')
+        if ($cur_stage != 'setup' && $cur_stage != 'wansetup')
             $this->_redirect('/admin/index');
 
 		if($cur_stage == 'wansetup')
@@ -147,7 +147,7 @@ class SetupController extends Page
       } else {
 
         $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage != 'reset' && $cur_stage != 'wansetup')
+        if ($cur_stage != 'setup' && $cur_stage != 'wansetup')
             $this->_redirect('/admin/index');
 
         // DEPRECATED:
