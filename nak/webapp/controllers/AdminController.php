@@ -196,16 +196,17 @@ class AdminController extends Page
         $ovpn_obj = new Ovpn();
 
         if (!empty($request->postvar('file')))
-            $ovpn_file = $ovpn_obj->ovpn_root . '/upload/' . basename($request->postvar('file'));
+            $ovpn_file = $ovpn_obj->ovpn_root . 'upload/' . basename($request->postvar('file'));
 
-        $current = $ovpn_obj->ovpn_root . '/current.ovpn';
+        $current = $ovpn_obj->ovpn_root . 'current.ovpn';
         if ($ovpn_file && file_exists($ovpn_file)) {
-            $ovpn_file = escapeshellarg($ovpn_file);
             unlink($current);
-            //shell_exec('rm '.$current.'; ln -s '.$ovpn_file.' '.$current);
+            symlink($ovpn_file,$current);
+            // DEPRECATED: $ovpn_file = escapeshellarg($ovpn_file);
+            // shell_exec('rm '.$current.'; ln -s '.$ovpn_file.' '.$current);
         }
 
-        if(symlink($ovpn_file,$current)) {
+        if(file_exists($current)) {
           $vpn_success = NetAidManager::toggle_vpn();
         } else {
           $vpn_success = FALSE;
