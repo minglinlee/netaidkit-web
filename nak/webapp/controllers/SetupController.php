@@ -13,11 +13,11 @@ class SetupController extends Page
     {
         $cur_stage = NetAidManager::get_stage();
 
-        if ($cur_stage != 'reset' && $cur_stage != 'wansetup')
+        if ($cur_stage != 'setup' && $cur_stage != 'wansetup')
             $this->_redirect('/admin/index');
 
-		if($cur_stage == 'wansetup')
-            $this->_redirect('/setup/wan');
+        if($cur_stage == 'wansetup')
+                $this->_redirect('/setup/wan');
 
         $request = $this->getRequest();
         if ($request->isPost()) {
@@ -31,23 +31,23 @@ class SetupController extends Page
             $valid = $this->ap_validate($ssid, $key, $adminpass, $key_confirm, $adminpass_confirm);
 
             if ($valid) {
-                $pass_success = NetAidManager::set_adminpass($adminpass);
-                $ap_success = NetAidManager::setup_ap($ssid, $key);
-				$success = ($ap_success && $pass_success);
-				if ($success) {
-					$this->_addMessage('info', _('Access Point successfully set up.'), 'wan');
-				}
+              $pass_success = NetAidManager::set_adminpass($adminpass);
+              $ap_success = NetAidManager::setup_ap($ssid, $key);
+              $success = ($ap_success && $pass_success);
+              if ($success) {
+                $this->_addMessage('info', _('Access Point successfully set up.'), 'wan');
+              }
             } else {
-                $this->_addFormData('ssid', $ssid, 'ap');
-                $this->_addFormData('key', $key, 'ap');
-                $this->_addFormData('key_confirm', $key_confirm, 'ap');
-                $this->_addFormData('adminpass', $adminpass, 'ap');
-                $this->_addFormData('adminpass_confirm', $adminpass_confirm, 'ap');
+              $this->_addFormData('ssid', $ssid, 'ap');
+              $this->_addFormData('key', $key, 'ap');
+              $this->_addFormData('key_confirm', $key_confirm, 'ap');
+              $this->_addFormData('adminpass', $adminpass, 'ap');
+              $this->_addFormData('adminpass_confirm', $adminpass_confirm, 'ap');
             }
 
             if ($request->isAjax()) {
-                echo ($valid && $success) ? "SUCCESS" : "FAILURE";
-                exit;
+              echo ($valid && $success) ? "SUCCESS" : "FAILURE";
+              exit;
             }
         }
 
@@ -126,6 +126,8 @@ class SetupController extends Page
         $enctype  = $request->postvar('encryption');
 
         $wan_success  = NetAidManager::setup_wan($ssid, $key, $enctype);
+        $this->_addMessage('info', _('Setup complete.'), 'setup');
+        NetAidManager::set_stage('online');
 
         /* DEPRECATED:
         $cur_stage = NetAidManager::get_stage();
@@ -142,17 +144,11 @@ class SetupController extends Page
             // DEBUG: echo $ssid.' | '.$key.' | '.$enctype;
             echo $wan_success ? "SUCCESS" : "FAILURE";
             exit;
-        }
-        
+        }        
       } else {
-
         $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage != 'reset' && $cur_stage != 'wansetup')
+        if ($cur_stage != 'setup' && $cur_stage != 'wansetup')
             $this->_redirect('/admin/index');
-
-        // DEPRECATED:
-        //$wifi_list = NetAidManager::scan_wifi();
-        //$wifi_list = NetAidManager::list_wifi();
         $params = array('wifi_list' => $wifi_list);
         $view = new View('setup_wan', $params);
         return $view->display();

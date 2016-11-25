@@ -14,20 +14,20 @@
 		setInterval(function() {
 				if(pauseMainInterval != '/admin/wan') {
 					// wan status
-					nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-						if(data.result.local==true) {
-							nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-								return data.result.ssid;
-							});
-						} else {
-							nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": '+Math.floor(Math.random()*1000)+'}','#wan-connection', function(data) {
-								if(data.result.connecting!=0) {
-									return data.result.network+' (connecting)';
-								} else {
-									return content.disconnected;
-								}
-							});
-						}
+					nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": 1}','#wan-connection', function(data) {
+              if(data.result.local==true) {
+                nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": 1}','#wan-connection', function(data) {
+                  return data.result.ssid;
+                });
+              } else {
+                nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": 1}','#wan-connection', function(data) {
+                  if(data.result.connecting!=0) {
+                    return data.result.network+' (connecting)';
+                  } else {
+                    return content.disconnected;
+                  }
+                });
+              }
 					});
 				}
 		}, 3000);
@@ -40,23 +40,28 @@
 		}, 15000);
 		
         function nakdquery(json, element, successfunction) {
-			console.log('Requesting RPC data from nakd for "'+element+'".');
-			$.post("/nak-rpc",json,
-			function(data, status){
-				if(status=='success') {
-					if(typeof successfunction!='undefined') {
-						data = JSON.parse(data);
-						data.element = element;
-						var result = successfunction(data);
-					} else {
-						var result = data;
-					}
-					if(element) {
-						$(element).html(result);
-					}
-					// DEBUG: $(element).html(JSON.stringify(data));
-				}
-			});
+          console.log('Requesting RPC data from nakd'+(element?' for "'+element+'"':'')+'.');
+          $.ajax({
+            type:'POST',
+            url: '/nak-rpc',
+            data: json,
+            dataType: 'json',
+            success: function(data, status){
+              if(status=='success') {
+                if(typeof successfunction!='undefined') {
+                  // DEPRECATED: data = JSON.parse(data);
+                  data.element = element;
+                  var result = successfunction(data);
+                } else {
+                  var result = data;
+                }
+                if(element) {
+                  $(element).html(result);
+                }
+                // DEBUG: $(element).html(JSON.stringify(data));
+              }
+            }
+          });
         }
 
         function ajaxrefresh(url, element, successfunction) {
@@ -134,7 +139,9 @@
 
       function updateWifi() {
         spinner('#wifi-list',45);
-            
+           
+        nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_scan"}', false);
+ 
         nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_list"}', '#wifi-list', function(data) {
             // hide password field by default
           $('#login-pass').hide();
@@ -236,7 +243,8 @@
         
         function updateVpnStatus() {
 			nakdquery('{"jsonrpc": "2.0", "method": "openvpn_state", "params": "state", "id": '+Math.floor(Math.random()*1000)+'}','#vpnprogressbar', function(data) {
-				// DEBUG: $('#VpnStatus').html( JSON.stringify(data) );
+				// DEBUG: 
+        $('#VpnStatus').html( JSON.stringify(data) );
 				if(typeof data.error == 'undefined') {
 					var element = data.element;
 					var state = data.result[0].state;
@@ -290,6 +298,7 @@
 							}, 12000);
 						} else {
 							pushNotification(['Something went wrong toggling the TOR connection. Are you connected to the Internet?','warning','Close']);
+              updateTiles();
 						}
 					}
 				});
@@ -300,16 +309,25 @@
 
 		function attacheventvpn() {
 			$('.toggle-vpn').click(function(event) {
+        // get selected radio button first
+        var radios = document.getElementsByClassName('vpn-list-radiobtn');
+        var value;
+        for (var i = 0; i < radios.length; i++) {
+          if (radios[i].type === 'radio' && radios[i].checked) {
+            value = radios[i].value; // get value
+          }
+        }
+        // reflect UI changes
 				$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
 				$('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
 				$('.progress').hide();
 				$('#module-vpn .tile .wrapper').html('<p id="placeholder"></p>');
 				spinner('#module-vpn .tile .wrapper #placeholder',24);
 
-				var file = $("#vpnform input[type='radio']:checked").val();
-				var postdata = [];
-				if (typeof(file) != 'undefined') {
-					postdata = { 'file': file };
+				var postdata = {};
+				if (typeof value!='undefined') {
+					postdata = {"file":value};
+          // DEBUG: console.log('FILE: '+value);
 				}
 
 				$.ajax({
@@ -318,6 +336,7 @@
 					data: postdata,
 					success: function(data) {
 						if (data == 'SUCCESS') {
+              // DEBUG: console.log('SUCCESS');
 							var timing = 8000;
 							if($('#VpnTile').hasClass('connected')) { timing = 35000; }
 							setTimeout( function() {
@@ -325,6 +344,7 @@
 							}, timing);
 						} else {
 							pushNotification(['Something went wrong toggling the VPN connection. Are you connected to the Internet?','warning','Close']);
+              updateTiles();
 						}
 					}
 				});
@@ -348,6 +368,7 @@
 				$.ajax({
 					type: "POST",
 					url: "/admin/delete_vpn",
+          dataType: 'json',
 					data: {
 						'file': file
 					},
@@ -391,6 +412,7 @@
               type: 'POST',
               url: '/admin/wan',
               data: $('form#wan-form').serialize(),
+              dataType: 'text/html',
               success: function(data) {
                 if (data == 'SUCCESS') {
                   setTimeout(function(){ pauseMainInterval = ''; },25000);

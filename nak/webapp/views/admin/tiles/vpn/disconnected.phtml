@@ -17,7 +17,7 @@
 					foreach ($this->_params['vpn_options'] as $config) {
 						$file = $config['file'];
 				?>
-				<label style="margin-left: 12px;"><input type="radio" <?= $checked?> name="optionsRadios" id="optionsRadios2" value="<?php echo $file ?>" data-toggle="radio">&nbsp;&nbsp;&nbsp;<?php echo $config['title']; ?>&nbsp;&nbsp;&nbsp;<a class="open-deleteVPN" data-toggle="modal" data-id="<?php echo $file ?>" href="#deleteVPN"  style="text-decoration: none;"> <span class="fui-trash"></span></a> </label>
+				<label style="margin-left: 12px;"><input type="radio" <?= $checked?> class="vpn-list-radiobtn" name="optionsRadios" id="optionsRadios2" value="<?php echo $file ?>" data-toggle="radio">&nbsp;&nbsp;&nbsp;<?php echo $config['title']; ?>&nbsp;&nbsp;&nbsp;<a class="open-deleteVPN" data-toggle="modal" data-id="<?php echo $file ?>" href="#deleteVPN"  style="text-decoration: none;"> <span class="fui-trash"></span></a> </label>
 				<?php
 					$checked = ''; /* Reset checked to empty for next items */ }
 				?>

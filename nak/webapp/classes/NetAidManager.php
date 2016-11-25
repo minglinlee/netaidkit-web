@@ -26,32 +26,6 @@ class NetAidManager
         return $output;
     }
 
-	/*	DEPRECATED:
-    static public function list_wifi()
-    {
-        $client = new NakdClient();
-        $output = $client->doCommand('wlan_list');
-        $strength_list = array();
-        $wifi_list = array();
-        if(is_array($output)) {
-			foreach($output as $i => $wifi) {
-				$ssid = $wifi['ssid'];
-				$enctype = $wifi['encryption'];
-				if ($enctype == 'none')
-					$enctype = 'Open';
-				$strength = round(($wifi['quality']/$wifi['quality_max'])*1000)/10;
-				$strength_list[$strength] = array('ssid'=>$ssid,'encryption'=>$enctype,'strength'=>$strength);
-			}
-			krsort($strength_list);
-			foreach($strength_list as $strength => $wifi) {
-				$wifi_list[$wifi['ssid']] = $wifi;
-			}
-		}
-		$wifi_list=array(_('Wired connection')=>array('encryption'=>'Wired','strength'=>100))+$wifi_list; // add wired connection
-        return $wifi_list;
-    }
-    */
-
     static public function list_stored_wifi()
     {
         $client = new NakdClient();
@@ -126,7 +100,7 @@ class NetAidManager
     {
         $client = new NakdClient();		
         $output = $client->doCommand('stage_current');
-        if($output['name']=='reset') {
+        if($output['name']=='setup') {
           if(file_exists(ROOT_DIR . '/data/pass')) $output = array( 'name' => 'wansetup' );
           if(file_exists(ROOT_DIR . '/data/configured')) $output = array( 'name' => 'default' );
         }
@@ -143,7 +117,7 @@ class NetAidManager
 	static public function init_stage()
 	{
         $cur_stage = NetAidManager::get_stage();
-        if ($cur_stage == 'reset') header('Location: /setup/ap');
+        if ($cur_stage == 'setup') header('Location: /setup/ap');
 		return $cur_stage;
 	}
 	
@@ -162,7 +136,8 @@ class NetAidManager
         $cur_stage = self::get_stage();
         if ($cur_stage == 'tor') {
             self::set_stage('offline');
-        } elseif ($cur_stage == 'online' || $cur_stage == 'offline') {
+        } elseif ($cur_stage == 'online' || $cur_stage == 'offline' ||
+                  $cur_stage == 'setup' || $cur_stage == 'wansetup') {
             self::set_stage('tor');
         } else {
             return false;
@@ -175,7 +150,8 @@ class NetAidManager
         $cur_stage = self::get_stage();
         if ($cur_stage == 'vpn') {
             self::set_stage('offline');
-        } elseif ($cur_stage == 'online' || $cur_stage == 'offline') {
+        } elseif ($cur_stage == 'online' || $cur_stage == 'offline' ||
+                  $cur_stage == 'setup' || $cur_stage == 'wansetup') {
             self::set_stage('vpn');
         } else {
             return false;
@@ -219,7 +195,7 @@ class NetAidManager
         $client = new NakdClient();		
         $stage_req = $client->doCommand('stage_status');
 		$cur_stage = self::get_stage();
-		if((isset($stagereq['name']) && $stagereq['name']=='online') || ($cur_stage != 'offline' && $cur_stage != 'reset' && $cur_stage != 'tor' && $cur_stage != 'vpn')) {
+		if((isset($stagereq['name']) && $stagereq['name']=='online') || ($cur_stage != 'offline' && $cur_stage != 'setup' && $cur_stage != 'tor' && $cur_stage != 'vpn')) {
 			$mode = TRUE;
 		} else {
 			$mode = FALSE;

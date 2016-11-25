@@ -198,28 +198,29 @@ class AdminController extends Page
         if (!empty($request->postvar('file')))
             $ovpn_file = $ovpn_obj->ovpn_root . '/upload/' . basename($request->postvar('file'));
 
-		$current = $ovpn_obj->ovpn_root . '/current.ovpn';
+        $current = $ovpn_obj->ovpn_root . '/current.ovpn';
         if ($ovpn_file && file_exists($ovpn_file)) {
             $ovpn_file = escapeshellarg($ovpn_file);
-            shell_exec('rm '.$current.'; ln -s '.$ovpn_file.' '.$current);
+            unlink($current);
+            //shell_exec('rm '.$current.'; ln -s '.$ovpn_file.' '.$current);
         }
 
-		if(file_exists($current)) {
-			$vpn_success = NetAidManager::toggle_vpn();
-		} else {
-			$vpn_success = FALSE;
-		}
+        if(symlink($ovpn_file,$current)) {
+          $vpn_success = NetAidManager::toggle_vpn();
+        } else {
+          $vpn_success = FALSE;
+        }
 		
-		if ($request->isAjax()) {
-			if($vpn_success) {
-				echo 'SUCCESS';
-			} else {
-				echo 'FAILURE';
-			}
-			exit;
-		} else {
-			$this->_redirect('admin/index');
-		}
+        if ($request->isAjax()) {
+          if($vpn_success) {
+            echo 'SUCCESS';
+          } else {
+            echo 'FAILURE';
+          }
+          exit;
+        } else {
+          $this->_redirect('admin/index');
+        }
     }
 
 	/*	DEPRECATED:
