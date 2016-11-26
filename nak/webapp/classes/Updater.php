@@ -42,6 +42,10 @@ class Updater
     }
 
     public function updateAvailable() {
+        $cur_stage = NetAidManager::get_stage();
+        if ($cur_stage != 'offline' && $cur_stage != 'online')
+            return false;
+
 		// is there a reminder active?
         $reminder = UpdateReminder::get_reminder();
         if (!($reminder->isExpired()))
