@@ -58,7 +58,7 @@
                 if(element) {
                   $(element).text(result);
                 }
-                // DEBUG: $(element).html(JSON.stringify(data));
+                // DEBUG: $(element).text(JSON.stringify(data));
               }
             }
           });
@@ -243,8 +243,7 @@
         
         function updateVpnStatus() {
 			nakdquery('{"jsonrpc": "2.0", "method": "openvpn_state", "params": "state", "id": '+Math.floor(Math.random()*1000)+'}','#vpnprogressbar', function(data) {
-				// DEBUG: 
-        $('#VpnStatus').html( JSON.stringify(data) );
+				// DEBUG: $('#VpnStatus').html( JSON.stringify(data) );
 				if(typeof data.error == 'undefined') {
 					var element = data.element;
 					var state = data.result[0].state;
@@ -343,8 +342,10 @@
 								updateTiles();
 							}, timing);
 						} else {
-							pushNotification(['Something went wrong toggling the VPN connection. Are you connected to the Internet?','warning','Close']);
-              updateTiles();
+							pushNotification(['Something seems to have gone wrong toggling the VPN connection.','warning','Close']);
+							setTimeout( function() {              
+                updateTiles();
+              }, 5000);
 						}
 					}
 				});
