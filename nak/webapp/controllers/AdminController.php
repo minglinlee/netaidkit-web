@@ -80,7 +80,8 @@ class AdminController extends Page
         else
             $this->_addMessage('error', _('Could not remove file.'), 'vpn');
 
-        $this->_redirect('/admin/index');
+        // NOT NEEDED HERE: $this->_redirect('/admin/index');
+        die('SUCCESS');
     }
 
     public function toggle_tor()

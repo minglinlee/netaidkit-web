@@ -245,10 +245,6 @@ class NetAidManager
     }
     
     static public function detect_portal() {
-        $cur_stage == self::get_stage();
-        if ($cur_stage != 'online' && $cur_stage != 'offline')
-            return false;
-
         $client = new NakdClient();
         $output = $client->doCommand('connectivity');
         return ($output['local']==TRUE && $output['internet']==FALSE ? TRUE : FALSE);
