@@ -292,9 +292,22 @@
 					url: "/admin/toggle_tor",
 					success: function(data) {
 						if (data == 'SUCCESS') {
-							setTimeout( function() {
-								updateTiles();
-							}, 12000);
+              intervaltor = setInterval( function() {
+                nakdquery('{"jsonrpc":"2.0", "id":1, "method":"stage_current"}','', function(data) {
+                  if(typeof data.result!='undefined') {
+                    var toggledone = 0;
+                    if(document.getElementById('TorTile')!=null) {
+                      if(data.result.name!='tor') { toggledone = 1; }
+                    } else {
+                      if(data.result.name=='tor') { toggledone = 1; }
+                    }
+                    if(toggledone) {
+                      clearInterval(intervaltor);
+                      updateTiles();
+                    }
+                  }
+                });
+              }, 3000);
 						} else {
 							pushNotification(['Something went wrong toggling the TOR connection. Are you connected to the Internet?','warning','Close']);
               updateTiles();
@@ -341,7 +354,7 @@
                 nakdquery('{"jsonrpc":"2.0", "id":1, "method":"stage_current"}','', function(data) {
                   if(typeof data.result!='undefined') {
                     var toggledone = 0;
-                    if($('#VpnTile').hasClass('connected')) {
+                    if(document.getElementById('VpnTile')!=null) {
                       if(data.result.name!='vpn') { toggledone = 1; }
                     } else {
                       if(data.result.name=='vpn') { toggledone = 1; }
