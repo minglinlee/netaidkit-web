@@ -1,46 +1,48 @@
 <script type="text/javascript">
     $(document).ready(function() {
-		// get general translation strings
-		content={};
-		content.wired = 'Wired connection'; // hard coded, but should be: _tr('Wired connection','wired');
-		_tr('<span style="color: red;">Disconnected</span>','disconnected');
-		_tr('connecting','connecting');
+      // get general translation strings
+      content={};
+      content.wired = 'Wired connection'; // hard coded, but should be: _tr('Wired connection','wired');
+      _tr('<span style="color: red;">Disconnected</span>','disconnected');
+      _tr('connecting','connecting');
+      
+      // general repeating interval interrupt
+      pauseMainInterval = '';
+      runningIntervals = {};
+      runningIntQueue = [];
 		
-		// general repeating interval interrupt
-		pauseMainInterval = '';
-		runningIntervals = {};
-		runningIntQueue = [];
+      setInterval(function() {
+          if(pauseMainInterval != '/admin/wan') {
+            // wan status
+            nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": 1}','#wan-connection', function(data) {
+                if(data.result.local==true) {
+                  nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": 1}','#wan-connection', function(data) {
+                    return data.result.ssid;
+                  });
+                } else {
+                  nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": 1}','#wan-connection', function(data) {
+                    if(data.result.connecting!=0) {
+                      return data.result.network+' (connecting)';
+                    } else {
+                      return content.disconnected;
+                    }
+                  });
+                }
+            });
+          }
+      }, 3000);
 		
-		setInterval(function() {
-				if(pauseMainInterval != '/admin/wan') {
-					// wan status
-					nakdquery('{"jsonrpc": "2.0", "method": "connectivity", "id": 1}','#wan-connection', function(data) {
-              if(data.result.local==true) {
-                nakdquery('{"jsonrpc": "2.0", "method": "wlan_current", "params": "WLAN", "id": 1}','#wan-connection', function(data) {
-                  return data.result.ssid;
-                });
-              } else {
-                nakdquery('{"jsonrpc": "2.0", "method": "wlan_connecting", "params": "WLAN", "id": 1}','#wan-connection', function(data) {
-                  if(data.result.connecting!=0) {
-                    return data.result.network+' (connecting)';
-                  } else {
-                    return content.disconnected;
-                  }
-                });
-              }
-					});
-				}
-		}, 3000);
+      setInterval(function() {
+          // routing toggle switch state
+          ajaxrefresh('/admin/routing_status','',
+           "var state=data; if(state) { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off'); } else { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on'); }"
+          );
+      }, 15000);
 		
-		setInterval(function() {
-				// routing toggle switch state
-				ajaxrefresh('/admin/routing_status','',
-				 "var state=data; if(state) { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off'); } else { $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on'); }"
-				);
-		}, 15000);
-		
-        function nakdquery(json, element, successfunction) {
-          console.log('Requesting RPC data from nakd'+(element?' for "'+element+'"':'')+'.');
+      function nakdquery(json, element, successfunction, cnt) {
+        console.log('Requesting RPC data from nakd'+(element?' for "'+element+'"':'')+'.');
+        if(typeof cnt=='undefined') { cnt=1; } else { cnt++; }
+        if(cnt<6) {
           $.ajax({
             type:'POST',
             url: '/nak-rpc',
@@ -60,9 +62,13 @@
                 }
                 // DEBUG: $(element).html(JSON.stringify(data));
               }
+            },
+            failure: function(json, element, successfunction) {
+              setTimeout( nakdquery(json, element, successfunction) ,3000);
             }
           });
         }
+      }
 
         function ajaxrefresh(url, element, successfunction) {
 			// fix for limited memory: define a static, symbolic url, and use a queue for the requests
@@ -319,125 +325,124 @@
 		}
 		attacheventtor();
 
-		function attacheventvpn() {
-			$('.toggle-vpn').click(function(event) {
-        // get selected radio button first
-        var radios = document.getElementsByClassName('vpn-list-radiobtn');
-        var value;
-        for (var i = 0; i < radios.length; i++) {
-          if (radios[i].type === 'radio' && radios[i].checked) {
-            value = radios[i].value; // get value
-          }
+        function attacheventvpn() {
+          $('.toggle-vpn').click(function(event) {
+            // get selected radio button first
+            var radios = document.getElementsByClassName('vpn-list-radiobtn');
+            var value;
+            for (var i = 0; i < radios.length; i++) {
+              if (radios[i].type === 'radio' && radios[i].checked) {
+                value = radios[i].value; // get value
+              }
+            }
+            // reflect UI changes
+            $('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
+            $('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
+            $('.progress').hide();
+            $('#module-vpn .tile .wrapper').html('<p id="placeholder"></p>');
+            spinner('#module-vpn .tile .wrapper #placeholder',24);
+
+            var postdata = {};
+            if (typeof value!='undefined') {
+              postdata = {"file":value};
+              // DEBUG: console.log('FILE: '+value);
+            }
+
+            $.ajax({
+              type: "POST",
+              url: "/admin/toggle_vpn",
+              data: postdata,
+              success: function(data) {
+                if (data == 'SUCCESS') {
+                  // DEBUG: console.log('SUCCESS');
+                  intervalvpn = setInterval( function() {
+                    // {"jsonrpc":"2.0","id":1,"result":{"name":"offline","desc":"","required_connectivity":"CONNECTIVITY_NONE"},"element":""}
+                    nakdquery('{"jsonrpc":"2.0", "id":1, "method":"stage_current"}','', function(data) {
+                      if(typeof data.result!='undefined') {
+                        var toggledone = 0;
+                        if(document.getElementById('VpnTile')!=null) {
+                          if(data.result.name!='vpn') { toggledone = 1; }
+                        } else {
+                          if(data.result.name=='vpn') { toggledone = 1; }
+                        }
+                        if(toggledone) {
+                          clearInterval(intervalvpn);
+                          updateTiles();
+                        }
+                      }
+                    });
+                  }, 3000);
+                } else {
+                  pushNotification(['Something seems to have gone wrong toggling the VPN connection.','warning','Close']);
+                  setTimeout( function() {              
+                    updateTiles();
+                  }, 5000);
+                }
+              }
+            });
+            event.preventDefault();
+          });
+
+          $('.upload-vpn').click(function(event) {
+            var file = document.getElementById('vpnfile').files[0];
+            var size = file.size;
+
+            if (size > 20000) {
+              pushNotification(['Sorry, your file is too big. Are you sure it is a valid .ovpn file?','warning','Close']);
+              //alert('<?php echo _("Sorry, your file is too big. Are you sure it is a valid .ovpn file?"); ?>');
+              return;
+            }
+            document.getElementById('add-vpn').submit();
+          });
+
+          $('.delete-vpn').click(function(event) {
+            var file = document.getElementById('myVPN').innerHTML;
+            $.ajax({
+              type: "POST",
+              url: "/admin/delete_vpn",
+              data: {
+                'file': file
+              },
+              success: function(data) {
+                window.location.href = '/admin/index';
+              },
+            });
+
+          });
+
+          $('#vpnConnectBtn').click(function(event) {
+            var file = $("#vpnform input[type='radio']:checked").val();
+
+            if (typeof(file) == 'undefined') {
+              event.preventDefault();
+              return false;
+            }
+          });
         }
-        // reflect UI changes
-				$('#module-vpn .tile a').removeClass('btn-primary').addClass('btn-disabled');
-				$('#module-tor .tile a').removeClass('btn-primary').addClass('btn-disabled');
-				$('.progress').hide();
-				$('#module-vpn .tile .wrapper').html('<p id="placeholder"></p>');
-				spinner('#module-vpn .tile .wrapper #placeholder',24);
+        attacheventvpn();
 
-				var postdata = {};
-				if (typeof value!='undefined') {
-					postdata = {"file":value};
-          // DEBUG: console.log('FILE: '+value);
-				}
-
-				$.ajax({
-					type: "POST",
-					url: "/admin/toggle_vpn",
-					data: postdata,
-					success: function(data) {
-						if (data == 'SUCCESS') {
-              // DEBUG: console.log('SUCCESS');
-              intervalvpn = setInterval( function() {
-                // {"jsonrpc":"2.0","id":1,"result":{"name":"offline","desc":"","required_connectivity":"CONNECTIVITY_NONE"},"element":""}
-                nakdquery('{"jsonrpc":"2.0", "id":1, "method":"stage_current"}','', function(data) {
-                  if(typeof data.result!='undefined') {
-                    var toggledone = 0;
-                    if(document.getElementById('VpnTile')!=null) {
-                      if(data.result.name!='vpn') { toggledone = 1; }
-                    } else {
-                      if(data.result.name=='vpn') { toggledone = 1; }
-                    }
-                    if(toggledone) {
-                      clearInterval(intervalvpn);
-                      updateTiles();
-                    }
-                  }
-                });
-              }, 3000);
-						} else {
-							pushNotification(['Something seems to have gone wrong toggling the VPN connection.','warning','Close']);
-							setTimeout( function() {              
-                updateTiles();
-              }, 5000);
-						}
-					}
-				});
-				event.preventDefault();
-			});
-
-			$('.upload-vpn').click(function(event) {
-				var file = document.getElementById('vpnfile').files[0];
-				var size = file.size;
-
-				if (size > 20000) {
-					pushNotification(['Sorry, your file is too big. Are you sure it is a valid .ovpn file?','warning','Close']);
-					//alert('<?php echo _("Sorry, your file is too big. Are you sure it is a valid .ovpn file?"); ?>');
-					return;
-				}
-				document.getElementById('add-vpn').submit();
-			});
-
-			$('.delete-vpn').click(function(event) {
-				var file = document.getElementById('myVPN').innerHTML;
-				$.ajax({
-					type: "POST",
-					url: "/admin/delete_vpn",
-					data: {
-						'file': file
-					},
-					success: function(data) {
-						window.location.href = '/admin/index';
-					},
-				});
-
-			});
-
-			$('#vpnConnectBtn').click(function(event) {
-				var file = $("#vpnform input[type='radio']:checked").val();
-
-				if (typeof(file) == 'undefined') {
-					event.preventDefault();
-					return false;
-				}
-			});
-		}
-		attacheventvpn();
-
-    $('#wifi-refresh').click(function(event) {
-      if(!$('#wifi-refresh').hasClass('btn-disabled')) {
-        $('#wifi-refresh').toggleClass('btn-disabled btn-primary');
-        $('#wan-submit').toggleClass('btn-disabled btn-primary');
-        updateWifi();
-        setTimeout(function() {
-          $('#wifi-refresh').toggleClass('btn-primary btn-disabled');
-          $('#wan-submit').toggleClass('btn-primary btn-disabled');
-        },8000);
-      }
-    });
+        $('#wifi-refresh').click(function(event) {
+          if(!$('#wifi-refresh').hasClass('btn-disabled')) {
+            $('#wifi-refresh').toggleClass('btn-disabled btn-primary');
+            $('#wan-submit').toggleClass('btn-disabled btn-primary');
+            updateWifi();
+            setTimeout(function() {
+              $('#wifi-refresh').toggleClass('btn-primary btn-disabled');
+              $('#wan-submit').toggleClass('btn-primary btn-disabled');
+            },8000);
+          }
+        });
 
         $('#wan-form').submit(function(event) {
           event.preventDefault()
-          $('#wifiModal').modal('hide');
           if(!$('#wifi-refresh').hasClass('btn-disabled')) {        
+            $('#wifiModal').modal('hide');
             pauseMainInterval = '/admin/wan';
             spinner('#wan-connection');
             $.ajax({
               type: 'POST',
               url: '/admin/wan',
               data: $('form#wan-form').serialize(),
-              dataType: 'text/html',
               success: function(data) {
                 if (data == 'SUCCESS') {
                   setTimeout(function(){ pauseMainInterval = ''; },25000);
@@ -451,7 +456,7 @@
                       }
                     }
                     $('#wan-connection').html(value+' <i>('+content.connecting+')</i>');
-                   },3000);
+                  },3000);
                 }
               },
             });
@@ -465,27 +470,28 @@
         });
 
         $('#nroutingswitch').on('switchChange.bootstrapSwitch', function(event, state) {
-			pauseMainInterval = '/admin/routing_status';
-			setTimeout(function(){ pauseMainInterval = ''; },12000);
-            if (state == 1) {
-                console.log('Insecure routing disabled (switch on).');
-                $sdata = 'off';
-            } else {
-                console.log('Insecure routing enabled (switch off).');
-                $sdata = 'on';
-            };
-            $.ajax({
-                type: "POST",
-                url: "/admin/toggle_routing",
-                data: {
-                    mode: $sdata
-                },
-				success: function(data) {
-					if (data == 'SUCCESS') {
-						$('#nroutingswitch').bootstrapSwitch('state', state );
-					}
-				}
-            });
+          pauseMainInterval = '/admin/routing_status';
+          setTimeout(function(){ pauseMainInterval = ''; },12000);
+          if (state == 1) {
+              console.log('Insecure routing disabled (switch on).');
+              $sdata = 'off';
+          } else {
+              console.log('Insecure routing enabled (switch off).');
+              $sdata = 'on';
+          };
+          $.ajax({
+            type: "POST",
+            url: "/admin/toggle_routing",
+            data: {
+                mode: $sdata
+            },
+            success: function(data) {
+              if (data == 'SUCCESS') {
+                $('#nroutingswitch').bootstrapSwitch('state', state );
+              }
+            }
+          });
         });
+
     });
 </script>
