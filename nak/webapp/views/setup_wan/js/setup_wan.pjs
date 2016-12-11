@@ -1,4 +1,12 @@
 <script type="text/javascript">
+    // sanitation prototype (TODO: We'd rather use the  npm install --save sanitize-html  browserified in the future! It is more secure!)
+    String.prototype.sanitize=function (white,black) {
+       if (!white) white='b|i|p|br';//allowed tags
+       if (!black) black='script|object|embed';//complete remove tags
+       var e=new RegExp("(<("+black+")[^>]*>.*</\\2>|(?!<[/]?("+white+")(\\s[^<]*>|[/]>|>))<[^<>]*>|(?!<[^<>\\s]+)\\s[^</>]+(?=[/>]))", "gi");
+       return this.replace(e,'');
+    }
+    
     $(document).ready(function() {
 
       // hide password field
@@ -74,11 +82,10 @@
       }
 
       function updateWifi() {
-        spinner('#wifi-list',45);
-            
+        spinner('#wifi-list',45);         
         nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_scan"}', false);
         nakdquery('{"jsonrpc":"2.0", "id":1, "method":"wlan_list"}', '#wifi-list', function(data) {
-          // hide password field by default
+            // hide password field by default
           $('#login-pass').hide();
           $('#login-field-icon').hide();
           // construct list of wlan stations
@@ -88,18 +95,18 @@
           data.result.forEach( function(entry){
             i++;
             entry.strength = Math.round(entry.quality/entry.quality_max*1000)/10;
-            html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="'+entry.encryption+'" id="optionsRadios'+i+'" value="'+entry.ssid+'" data-toggle="radio"><span class="fui-'+(entry.encryption!='Open'?'lock':'eye')+'"></span> '+entry.ssid+'</td>';
+            html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="'+entry.encryption.sanitize()+'" id="optionsRadios'+i+'" value="'+entry.ssid.sanitize()+'" data-toggle="radio"><span class="fui-'+(entry.encryption!='none'?'lock':'eye')+'"></span> '+entry.ssid.sanitize()+'</td>';
             html += '<td style="text-align: right;"><div class="meter'+(entry.strength<50?(entry.strength<25?' red':' orange'):'')+'"><span style="width: '+entry.strength+'%"></span></div>';
             html += '</td></tr>';
           });
           html += '</tbody></table></label> <div style="height: 1.5em;"></div>';
-          $(data.element).html(html);
+          $(data.element).html(html); // is sanitized above!
           $(data.element).trigger("create");
 
           $(".wifi-list-radiobtn").click( function() {
             var encryption = $('#'+this.id).attr('encryption');
             $('#encryptiontype').val(encryption);
-            if(encryption=='Open' || encryption=='Wired') {
+            if(encryption=='none' || encryption=='Wired') {
               $('#login-pass').fadeOut();
               $('#login-field-icon').fadeOut();
             } else {

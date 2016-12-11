@@ -70,7 +70,8 @@ class NetAidManager
       if($ssid != _('Wired connection')) {
         if (empty($ssid))
           return false;			
-        if($enctype='psk-mixed') { $enctype = 'psk2'; }
+        if($enctype=='') { $enctype = 'none'; }
+        if($enctype=='psk-mixed') { $enctype = 'psk2'; }
         $output = $client->doCommand('wlan_connect', array('ssid' => $ssid, 'key' => ($enctype!='none'?$key:'none'), 'encryption' => $enctype, 'store' => TRUE, 'auto' => TRUE));
       } else {	# reset uplink wifi
         $output = $client->doCommand('wlan_disconnect'); // <- here you'll have to disable global autoconnect, too, and let user re-enable it
