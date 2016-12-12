@@ -179,16 +179,8 @@ class NetAidManager
 
     static public function do_update($image_file)
     {
-
-        $pid = pcntl_fork();
-        if ($pid == -1) {
-             die('could not fork');
-        } else if ($pid) {
-            //parent
-        } else {
-            $client = new NakdClient();
-            $output = $client->doCommand('doupdate', array($image_file));
-        }
+        $client = new NakdClient();
+        $output = $client->doCommand('doupdate', array($image_file));
     }
 
     static public function routing_status()
