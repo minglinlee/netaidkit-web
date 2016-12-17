@@ -97,8 +97,7 @@ class Updater
     }
 
     public function performUpdate() {
-        NetAidManager::do_update($this->_localImagePath);
-        return true;
+        return NetAidManager::do_update($this->_localImagePath);
     }
 
     public function get_percentage_downloaded() {
