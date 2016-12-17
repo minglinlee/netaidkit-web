@@ -43,6 +43,8 @@ class NakdClient {
         $command = '{ "jsonrpc": "2.0", "method": "'.$cmdString.'"'.$args.', "id": '.rand(0,1000).' }';
         $response = $this->_sendCommand($command);
 		$json = json_decode($response, true);
+        if (isset($json['error']))
+            return false;
         return $json['result'];
     }
 

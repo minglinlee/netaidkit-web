@@ -96,26 +96,8 @@ class Updater
         unlink($this->_localImagePath);
     }
 
-    public function validateSignature() {
-        if (!file_exists($this->_pubKeyFile))
-            throw new Exception('Public key file not found.');
-
-        $pubkey = file_get_contents($this->_pubKeyFile);
-
-        $data = file_get_contents($this->_localImagePath);
-        $signature = substr($data, -512);
-        $data = substr($data, 0, -512);
-        $status = openssl_verify($data, $signature, $pubkey, "sha1WithRSAEncryption");
-
-        if ($status == 1)
-            return true;
-
-        return false;
-    }
-
     public function performUpdate() {
         NetAidManager::do_update($this->_localImagePath);
-
         return true;
     }
 

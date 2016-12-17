@@ -38,11 +38,6 @@ class UpdateController extends Page
         if ($request->isPost()) {
             $updater = new Updater();
             if ($updater->updateAvailable()) {
-                if (!$updater->validateSignature()) {
-                    $updater->deleteImage();
-                    die('INVALID SIGNATURE');
-                }
-
                     //die('SUCCESS'); # ENABLE TO DEBUG!
                 if ($updater->performUpdate())
                     die('SUCCESS');

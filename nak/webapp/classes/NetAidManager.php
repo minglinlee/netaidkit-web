@@ -180,7 +180,11 @@ class NetAidManager
     static public function do_update($image_file)
     {
         $client = new NakdClient();
-        $output = $client->doCommand('sysupgrade', $image_file);
+
+        // doCommand() returns an array or boolean false
+        if ($client->doCommand('sysupgrade', $image_file) === false)
+            return false;
+        return true;
     }
 
     static public function routing_status()
