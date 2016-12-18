@@ -48,15 +48,8 @@
       }, 5000);
 		
       setInterval(function() {
-        // routing toggle switch state
-        ajaxrefresh('/admin/routing_status',false, function(state) {
-          if(state) {
-            $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off');
-          } else {
-            $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on');
-          }
-        });
-      }, 15000);
+        updateRoutingButton();
+      }, 5000);
 		
       function nakdquery(json, element, successfunction, cnt) {
         console.log('Requesting RPC data from nakd'+(element?' for "'+element+'"':'')+'.');
@@ -69,7 +62,7 @@
             dataType: 'json',
             success: function(data, status){
               if(status=='success') {
-                if(typeof successfunction!='undefined') {
+                if(typeof successfunction=='function') {
                   data.element = element;
                   var result = successfunction(data);
                 } else {
@@ -176,6 +169,54 @@
       }
       updateWifi();
               
+      function updateRoutingButton() {
+        // routing toggle switch state
+        if(pauseMainInterval != 'routing_status') {
+          nakdquery('{"jsonrpc":"2.0", "id":1, "method":"stage_current"}',false, function(data) {
+            var routing = false;
+            if(typeof data.result != 'undefined') {
+              if(typeof data.result.name != 'undefined') {
+                if(data.result.name == 'online') {
+                  routing = true;                    
+                }
+              }
+            }
+            if(routing) {
+              $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off');
+            } else {
+              $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on');
+            }
+          });
+        }
+        /* DEPRECATED: 
+          nakdquery('{"jsonrpc": "2.0", "method": "stage_status", "id": 1}','#wan-connection', function(data) {
+            if(typeof data.result.name != 'undefined') {
+              if(typeof data.result.name == 'online') {
+              }
+            }
+          });
+
+        nakdquery('{"jsonrpc": "2.0", "method": "stage_status", "id": 1}','#wan-connection', function(data) {
+          if(typeof data.result.name != undefined) {
+            if(typeof data.result.name == 'online') {
+              routing = true;
+            }
+          } else {
+          }
+        });        
+          */
+         /* DEPRECATED:
+        ajaxrefresh('/admin/routing_status',false, function(state) {
+          if(state) {
+            $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-on').addClass('bootstrap-switch-off');
+          } else {
+            $('.bootstrap-switch-id-nroutingswitch').removeClass('bootstrap-switch-off').addClass('bootstrap-switch-on');
+          }
+        });
+        */
+      }
+      updateRoutingButton();
+      
       function updateTiles() {
         // clear all intervals first
         if(typeof intervaltor!='undefined') { clearInterval(intervaltor); }
@@ -462,8 +503,17 @@
       });
 
       $('#nroutingswitch').on('switchChange.bootstrapSwitch', function(event, state) {
-        pauseMainInterval = '/admin/routing_status';
+        pauseMainInterval = 'routing_status';
         setTimeout(function(){ pauseMainInterval = ''; },12000);
+        /* NOT YET POSSIBLE DUE TO AUTH ISSUES:
+          if (state == 1) {
+              console.log('Insecure routing disabled (switch on).');
+              nakdquery('{"jsonrpc":"2.0", "id":1, "method":"stage_set", "params":"online"}',false,false);
+          } else {
+              console.log('Insecure routing enabled (switch off).');
+              nakdquery('{"jsonrpc":"2.0", "id":1, "method":"stage_set", "params":"offline"}',false,false);
+          };
+        */
         if (state == 1) {
             console.log('Insecure routing disabled (switch on).');
             $sdata = 'off';

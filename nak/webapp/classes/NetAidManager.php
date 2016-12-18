@@ -180,7 +180,6 @@ class NetAidManager
     static public function do_update($image_file)
     {
         $client = new NakdClient();
-
         // doCommand() returns an array or boolean false
         if ($client->doCommand('sysupgrade', $image_file) === false)
             return false;
@@ -191,25 +190,25 @@ class NetAidManager
     {
         $client = new NakdClient();		
         $stage_req = $client->doCommand('stage_status');
-		$cur_stage = self::get_stage();
-		if((isset($stagereq['name']) && $stagereq['name']=='online') || ($cur_stage != 'offline' && $cur_stage != 'setup' && $cur_stage != 'tor' && $cur_stage != 'vpn')) {
-			$mode = TRUE;
-		} else {
-			$mode = FALSE;
-		}
+        $cur_stage = self::get_stage();
+        if((isset($stagereq['name']) && $stagereq['name']=='online') || ($cur_stage != 'offline' && $cur_stage != 'setup' && $cur_stage != 'tor' && $cur_stage != 'vpn')) {
+          $mode = TRUE;
+        } else {
+          $mode = FALSE;
+        }
         return $mode;
     }
 
     static public function toggle_routing($mode)
     {
-		$cur_stage = self::get_stage();
-		if($cur_stage != 'vpn' && $cur_stage != 'tor') {
-			if($mode == 'on' && $cur_stage == 'offline') {
-				self::set_stage('online');
-			} else {
-				self::set_stage('offline');
-			}
-		}
+        $cur_stage = self::get_stage();
+        if($cur_stage != 'vpn' && $cur_stage != 'tor') {
+          if($mode == 'on' && $cur_stage == 'offline') {
+            self::set_stage('online');
+          } else {
+            self::set_stage('offline');
+          }
+        }
         return true;
     }
 
@@ -243,8 +242,11 @@ class NetAidManager
     
     static public function detect_portal() {
         $client = new NakdClient();
-        $output = $client->doCommand('connectivity');
-        return ($output['local']==TRUE && $output['internet']==FALSE ? TRUE : FALSE);
+        $cur_stage = self::get_stage();
+        if($cur_stage == 'online') { 
+          $output = $client->doCommand('connectivity');
+          return ($output['local']==TRUE && $output['internet']==FALSE ? TRUE : FALSE);
+        } else { return FALSE; }
     }
 
     static public function release_info() {
