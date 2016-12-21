@@ -17,7 +17,7 @@
 			{ q: string },
 			function(string, status){ content[action] = htmlDecode(string); });
 		}
-    _tr('Wired connection','wired');
+    //_tr('Wired connection','wired');
     _tr('Disconnected','disconnected');
     _tr('connecting','connecting');
     // DEPRECATED: content.wired = 'Wired connection';

@@ -15,7 +15,7 @@
 
       // get general translation strings
       content={};
-      content.wired = 'Wired connection'; // hard coded, but should be: _tr('Wired connection','wired');
+      //content.wired = 'Wired connection'; // hard coded, but should be: _tr('Wired connection','wired');
 
       // action when submitting form
       $('#wan-submit').click(function(event) {
