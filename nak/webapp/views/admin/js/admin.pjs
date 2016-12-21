@@ -284,34 +284,46 @@
       function updateVpnStatus() {
         nakdquery('{"jsonrpc": "2.0", "method": "openvpn_state", "params": "state", "id": '+Math.floor(Math.random()*1000)+'}','#vpnprogressbar', function(data) {
           // DEBUG: $('#VpnStatus').html( JSON.stringify(data) );
-          if(typeof data.error == 'undefined') {
-            var element = data.element;
-            var state = data.result[0].state;
-            var progress = 0;
-            if(state == 'AUTH') {
-              var currentTime = new Date()
-              var t_start = data.result[0].timestamp;
-              var t_sec = Math.round( (currentTime.getTime()/1000) - t_start );
-              var estimated_sec = 30;
-              if (t_sec > estimated_sec) {
-                progress = 80;
-              } else {
-                progress = Math.round( (80 / estimated_sec) * t_sec );
+          if(typeof data.result != 'undefined') {
+            if(typeof data.result[0].state != 'undefined') {
+              var element = data.element;
+              var state = data.result[0].state;
+              var progress = 0;
+              var stateful = false;
+              if(state == 'TCP_CONNECT') {
+                var stateful = true;
+                var currentTime = new Date()
+                var t_start = data.result[0].timestamp;
+                var t_sec = Math.round( (currentTime.getTime()/1000) - t_start );
+                var estimated_sec = 30;
+                if (t_sec > estimated_sec) {
+                  progress = 75;
+                } else {
+                  progress = Math.round( (75 / estimated_sec) * t_sec );
+                }
               }
-            }
-            if(state == 'GET_CONFIG') {
-              progress = 90;
-            }
-            if(state == 'CONNECTED') {
-              progress = 100;
-            }
-            $(element).css('width', progress + '%');
-            if (progress == '100') {
-              $(element).css('width', '100%');
-              $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
-              $('#VpnTile').addClass('connected'); 
-              clearInterval(intervalvpn);
-              clearInterval(intervaltor);
+              if(state == 'AUTH') {
+                var stateful = true;
+                progress = 85;
+              }
+              if(state == 'GET_CONFIG') {
+                var stateful = true;
+                progress = 90;
+              }
+              if(state == 'CONNECTED') {
+                var stateful = true;
+                progress = 100;
+              }
+              if(stateful) {
+                $(element).css('width', progress + '%');
+                if (progress == '100') {
+                  $(element).css('width', '100%');
+                  $('#VpnStatus').html('<?php echo _("<h3>You are connected to a VPN</h3>"); ?>');
+                  $('#VpnTile').addClass('connected'); 
+                  clearInterval(intervalvpn);
+                  clearInterval(intervaltor);
+                }
+              }
             }
           }
         });
