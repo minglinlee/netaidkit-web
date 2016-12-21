@@ -90,14 +90,15 @@
           $('#login-field-icon').hide();
           // construct list of wlan stations
           var html = '<label class="radio"><table style="width: 100%;"><tbody>';
-          html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="Wired" checked="true" id="optionsRadios0" value="'+content.wired+'" data-toggle="radio"><span class="fui-loop"></span> '+content.wired+'</td><td style="text-align: right;"></td></tr>';
+          /*html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="Wired" checked="true" id="optionsRadios0" value="'+content.wired+'" data-toggle="radio"><span class="fui-loop"></span> '+content.wired+'</td><td style="text-align: right;"></td></tr>';*/
           var i = 0;
           data.result.forEach( function(entry){
-            i++;
+            //i++;
             entry.strength = Math.round(entry.quality/entry.quality_max*1000)/10;
             html += '<tr><td><input type="radio" name="ssid" class="wifi-list-radiobtn" encryption="'+entry.encryption.sanitize()+'" id="optionsRadios'+i+'" value="'+entry.ssid.sanitize()+'" data-toggle="radio"><span class="fui-'+(entry.encryption!='none'?'lock':'eye')+'"></span> '+entry.ssid.sanitize()+'</td>';
             html += '<td style="text-align: right;"><div class="meter'+(entry.strength<50?(entry.strength<25?' red':' orange'):'')+'"><span style="width: '+entry.strength+'%"></span></div>';
             html += '</td></tr>';
+			i++;
           });
           html += '</tbody></table></label> <div style="height: 1.5em;"></div>';
           $(data.element).html(html); // is sanitized above!
