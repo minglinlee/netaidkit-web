@@ -170,6 +170,7 @@ class AdminController extends Page
 						$result = strval(intval($progress));
 					break;
 					case 'WAIT': $result = '90'; break;
+					case 'ASSIGN_IP': $result = '95'; break;
 					case 'CONNECTED': $result = '100'; break;
 					default: $result = '0';
 					/*
