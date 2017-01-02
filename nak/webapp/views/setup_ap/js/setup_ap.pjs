@@ -2,7 +2,7 @@
     $(document).ready(function() {
         $('#ap-submit').click(function(event) {
             event.preventDefault();
-            $('#apModalText').html('<center><div class="spinner" style="margin: 20px;"><div class="spinner-loader"></div></div></center>');
+            $('#apModalText').append('<center><div class="spinner" style="margin: 20px;"><div class="spinner-loader"></div></div></center>');
             $("#ap-submit").toggleClass("btn-primary btn-disabled");
             $.ajax({
               type: "POST",
