@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: NetAidKit\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-02 16:14+0100\n"
+"POT-Creation-Date: 2017-01-04 18:26+0100\n"
 "PO-Revision-Date: 2016-11-16 11:11+0000\n"
 "Last-Translator: Igor <lyricaltumor@gmail.com>\n"
 "Language-Team: Croatian (http://www.transifex.com/otf/netaidkit/language/"
@@ -772,8 +772,8 @@ msgid "<h3>Internet</h3>"
 msgstr "<h3>Internet</h3>"
 
 #: ../nak/webapp/views/admin/tiles/internet.phtml:6
-msgid "Only allow connections over TOR or VPN:"
-msgstr "Dopusti samo veze preko Tor-a ili VPN-a:"
+msgid "Only allow outgoing connections over Tor or VPN:"
+msgstr "Only allow outgoing connections over Tor or VPN:"
 
 #: ../nak/webapp/views/admin/tiles/tor/modals/connect.phtml:6
 #: ../nak/webapp/views/admin/tiles/tor/disconnected.phtml:9
@@ -962,6 +962,9 @@ msgid "Sorry, your file is too big. Are you sure it is a valid .ovpn file?"
 msgstr ""
 "Žao nam je, Vaša datoteka je prevelika. Jeste li sigurni da je to valjana ."
 "ovpn datoteka?"
+
+#~ msgid "Only allow connections over TOR or VPN:"
+#~ msgstr "Dopusti samo veze preko Tor-a ili VPN-a:"
 
 #~ msgid "Setup complete. However, a connection could not be established."
 #~ msgstr "Postavljanje završeno, no veza nije uspostavljena."

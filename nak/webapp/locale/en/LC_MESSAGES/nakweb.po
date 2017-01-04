@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-02 16:14+0100\n"
+"POT-Creation-Date: 2017-01-04 18:26+0100\n"
 "PO-Revision-Date: 2015-12-14 13:37+0100\n"
 "Last-Translator: Mateusz Zalega <mateusz@appliedsourcery.com>\n"
 "Language-Team: NetAidKit Team <info@netaidkit.net>\n"
@@ -783,8 +783,8 @@ msgid "<h3>Internet</h3>"
 msgstr "<h3>Internet</h3>"
 
 #: ../nak/webapp/views/admin/tiles/internet.phtml:6
-msgid "Only allow connections over TOR or VPN:"
-msgstr "Only allow connections over TOR or VPN:"
+msgid "Only allow outgoing connections over Tor or VPN:"
+msgstr "Only allow outgoing connections over Tor or VPN:"
 
 #: ../nak/webapp/views/admin/tiles/tor/modals/connect.phtml:6
 #: ../nak/webapp/views/admin/tiles/tor/disconnected.phtml:9
@@ -974,6 +974,9 @@ msgstr "<h3>You are connected to a VPN</h3>"
 #: ../nak/webapp/views/admin/js/admin.pjs:437
 msgid "Sorry, your file is too big. Are you sure it is a valid .ovpn file?"
 msgstr "Sorry, your file is too big. Are you sure it is a valid .ovpn file?"
+
+#~ msgid "Only allow connections over TOR or VPN:"
+#~ msgstr "Only allow connections over TOR or VPN:"
 
 #~ msgid "Setup complete. However, a connection could not be established."
 #~ msgstr "Setup complete. However, a connection could not be established."

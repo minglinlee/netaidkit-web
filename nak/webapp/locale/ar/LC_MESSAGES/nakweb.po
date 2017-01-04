@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: NetAidKit\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-02 16:14+0100\n"
+"POT-Creation-Date: 2017-01-04 18:26+0100\n"
 "PO-Revision-Date: 2016-11-09 13:58+0000\n"
 "Last-Translator: Mateusz Zalega <msgctl@centzontotochtin.org>\n"
 "Language-Team: Arabic (http://www.transifex.com/otf/netaidkit/language/ar/)\n"
@@ -731,8 +731,8 @@ msgid "<h3>Internet</h3>"
 msgstr "<h3>انترنت</h3>"
 
 #: ../nak/webapp/views/admin/tiles/internet.phtml:6
-msgid "Only allow connections over TOR or VPN:"
-msgstr ""
+msgid "Only allow outgoing connections over Tor or VPN:"
+msgstr "Only allow outgoing connections over Tor or VPN:"
 
 #: ../nak/webapp/views/admin/tiles/tor/modals/connect.phtml:6
 #: ../nak/webapp/views/admin/tiles/tor/disconnected.phtml:9
@@ -913,6 +913,16 @@ msgstr "<h3>انت متصل بالشبكة الخاصة الافتراضية<h3/
 #: ../nak/webapp/views/admin/js/admin.pjs:437
 msgid "Sorry, your file is too big. Are you sure it is a valid .ovpn file?"
 msgstr ""
+
+msgid "Setup complete. However, a connection could not be established."
+msgstr "Setup complete. However, a connection could not be established."
+
+msgid ""
+"Click on the gear button to edit the settings for a stored network. You may "
+"use the other button to enable or disable auto-connect."
+msgstr ""
+"Click on the gear button to edit the settings for a stored network. You may "
+"use the other button to enable or disable auto-connect."
 
 #~ msgid "Wifi key does not match."
 #~ msgstr "Wifi key does not match."
